@@ -5,16 +5,15 @@ import json
 from urllib import urlencode
 from yql.storage import FileTokenStore
 import os
-
-KEY = "dj0yJmk9TU9pcUhubWRNdEFvJmQ9WVdrOWJVeDZSVTVXTkhVbWNHbzlNVEU1TkRJeE5qWXkmcz1jb25zdW1lcnNlY3JldCZ4PTY2"
-SECRET = "51941abecc25b4bd159329860103fdd5fde7b490"
+import time
+from secret import KEY, SECRET, TOKEN_SECRET
 
 class QueryManager:
     """
     Go get me some damn fantasy stats
     """
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         # Create your consumer with the proper key/secret.
         self.consumer = oauth.Consumer(key=KEY, secret=SECRET)
         self.yql_manager = yql.ThreeLegged(KEY, SECRET)
@@ -25,12 +24,21 @@ class QueryManager:
         
         self.get_token()
 
+        self._next_query = time.time()
+        self._time_between_queries = int(kwargs.get('sleep', 5))
+
+    def set_sleep(self, interval):
+        """
+        Change sleep time between queries
+        """
+        self._time_between_queries = interval
+
     def get_token(self):
         """
         Login and all that crap
         """
         path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'cache'))
-        token_store = FileTokenStore(path, secret='WRNdEFvJmQ9WVdrOWJVeDZSV')
+        token_store = FileTokenStore(path, secret=TOKEN_SECRET)
 
         stored_token = token_store.get('fantasy')
 
@@ -57,13 +65,17 @@ class QueryManager:
         """
         params = self.yql_manager.get_query_params(query, None)
         query_string = urlencode(params)
-        return self.run_url_query('%s?%s' % (self.yql_manager.uri, query_string))
+        return self.run_url_query('%s?%s&diagnostics=true' % (self.yql_manager.uri, query_string))
 
     def run_url_query(self, query_url):
         """
         Function to run simple queries for testing
         """
         self.get_token()
+        current_time = time.time()
+        if current_time < self._next_query:
+            time.sleep(self._next_query - current_time)
+        self._next_query = time.time() + self._time_between_queries
         return self.client.request(query_url, "GET")
 
     def decode_query(self, query_obj):
@@ -74,4 +86,6 @@ class QueryManager:
         """
         header, result = query_obj
         decoded_result = json.loads(result)
+        if decoded_result.get("query").get("diagnostics").get("url").get("http-status-code") == '999':
+            raise ValueError("error 999: Unable to process request at this time")
         return decoded_result

@@ -1,0 +1,93 @@
+#!/usr/bin/env pypy
+"""
+Player info management
+"""
+from query import QueryManager
+import time
+import os.path
+import pickle
+
+class Player:
+
+    query_manager = QueryManager()
+
+    @classmethod
+    def find_all(cls, **kwargs):
+        """
+        Since Yahoo is a bitch, go scrub the db and find which player ids
+        actually exist
+        """
+
+        start = kwargs.get('start', 0)
+        end = kwargs.get('end', 10000)
+        filename = kwargs.get('filename', 'player.log')
+        game = kwargs.get('game', 'nfl')
+        with open(filename, 'w') as output:
+            for player_id in range(start, end):
+                player_id = "%s.p.%04d" % (game, player_id)
+                query_str = "select * from fantasysports.players where player_key='%s'" % player_id
+                results = cls.query_manager.decode_query(
+                        cls.query_manager.run_yql_query(query_str)
+                        ).get('query').get('results')
+                if results:
+                    print '%s: True' % player_id
+                    output.write('%s\n' % player_id)
+                    cls.store_raw_info(player_id, results, **kwargs)
+                else:
+                    print '%s: False' % player_id
+                output.flush()
+
+    @classmethod
+    def store_raw_info(cls, p_id, result, **kwargs):
+        """
+        Grab player info from yahoo and store it locally so that I don't have to rape
+        my damn rate limits any time I want some new information
+        """
+        filename = os.path.join(kwargs.get("directory"), p_id)
+        with open(filename, 'w') as output:
+            pickle.dump(result, output)
+
+    @classmethod
+    def eligible_player(cls, **kwargs):
+        """
+        Search for eligible players for your league. For example, defensive
+        players aren't used in standard formats.
+        """
+        pass
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    parser.add_argument('-s', '--start', action='store', dest='start', metavar='n',  default=0, help='Index to begin search')
+    parser.add_argument('-e', '--end', action='store', dest='end',  metavar='n', default=10000, help='Index to end search')
+    parser.add_argument('-f', '--filename', action='store', dest='filename', default='player.log', metavar='FILE', help='Filename to read/write results')
+    parser.add_argument('-d', '--dir', action='store', dest='directory', default='player_data', metavar='DIR', help='Directory to read/write results')
+    parser.add_argument('-g', '--game', action='store', dest='game', default='nfl', metavar='ID', help='Game ID to search for players')
+    parser.add_argument('-S', '--sleep', action='store', dest='sleep', default=10, metavar='sec', help='Time to wait between queries')
+    parser.add_argument('-E', '--eligible', action='store_true', dest='eligible', default=False,
+            help='Search for eligible players, must use with --league flag, turns --filename into an input flag')
+    parser.add_argument('-l', '--league', action='store', dest='league', metavar='ID', help='League ID needed for queries')
+    parser.add_argument('--raw', action='store_true', dest='raw', default=False,
+            help='Grab player background data, turns --filename into an input flag')
+    args = parser.parse_args()
+    kwargs = {
+            'start': int(args.start),
+            'end': int(args.end),
+            'filename': str(args.filename),
+            'directory': str(args.directory),
+            'game': str(args.game),
+            'league': str(args.league),
+            }
+    if args.raw:
+        query = QueryManager(sleep=args.sleep)
+        with open(args.filename, 'r') as source:
+            for player_id in source:
+                player_id = player_id.strip()
+                query_str = "select * from fantasysports.players where player_key='%s'" % player_id
+                results = query.decode_query(query.run_yql_query(query_str)).get('query').get('results')
+                Player.store_raw_info(player_id, results, **kwargs)
+                print player_id
+    else:
+        Player.query.set_sleep(int(args.sleep))
+        Player.find_all(**kwargs)
