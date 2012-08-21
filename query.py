@@ -6,6 +6,7 @@ from urllib import urlencode
 from yql.storage import FileTokenStore
 import os
 import time
+import re
 from secret import KEY, SECRET, TOKEN_SECRET
 
 class QueryManager:
@@ -78,7 +79,33 @@ class QueryManager:
         self._next_query = time.time() + self._time_between_queries
         return self.client.request(query_url, "GET")
 
-    def decode_query(self, query_obj):
+    def batch_query(self, query, value_list, **kwargs):
+        """
+        Method to auto-iterate DB while packing queries together to reduce
+        the amount of hits to yahoo
+
+        @param query: Query string to use on database. Use @value where you
+            want items to be substituted
+        @param value_list: List of values to substitute into queries
+        """
+        query_re = re.compile(r'(value)')
+
+        block_size = kwargs.get('block_size', 10)
+        index = kwargs.get('start', 0)
+        end = kwargs.get('end', len(value_list))
+
+        while index < end:
+            escaped_list = ["'%s'" % str(value) for value in value_list[index:(index + block_size)]]
+            join_str = ', '
+            value_str = join_str.join(escaped_list)
+            ret_query = self.run_yql_query(query_re.sub(value_str, query))
+            key, results = self.__class__.decode_query(ret_query).get('query').get('results').popitem()
+            for result in results:
+                yield result
+            index = index + block_size
+
+    @staticmethod
+    def decode_query(query_obj):
         """
         Decode out the query object into python native format
         
@@ -86,6 +113,9 @@ class QueryManager:
         """
         header, result = query_obj
         decoded_result = json.loads(result)
-        if decoded_result.get("query").get("diagnostics").get("url").get("http-status-code") == '999':
-            raise ValueError("error 999: Unable to process request at this time")
+        diag = decoded_result.get("query").get("diagnostics").get("url")
+        if isinstance(diag, list):
+            diag = diag.pop()
+        if diag.get("http-status-code") == '999':
+            raise ValueError("%s: %s" % (diag.get("http-status-code"), diag.get('http-status-message')))
         return decoded_result

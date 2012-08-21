@@ -26,10 +26,9 @@ class Player:
             for player_id in range(start, end):
                 player_id = "%s.p.%04d" % (game, player_id)
                 query_str = "select * from fantasysports.players where player_key='%s'" % player_id
-                results = cls.query_manager.decode_query(
-                        cls.query_manager.run_yql_query(query_str)
-                        ).get('query').get('results')
+                results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str)).get('query').get('results')
                 if results:
+                    results = results.get('player')
                     print '%s: True' % player_id
                     output.write('%s\n' % player_id)
                     cls.store_raw_info(player_id, results, **kwargs)
@@ -80,14 +79,18 @@ if __name__ == '__main__':
             'league': str(args.league),
             }
     if args.raw:
+        import re
+        id_reg = re.compile('(\d+)$')
         query = QueryManager(sleep=args.sleep)
         with open(args.filename, 'r') as source:
             for player_id in source:
                 player_id = player_id.strip()
-                query_str = "select * from fantasysports.players where player_key='%s'" % player_id
-                results = query.decode_query(query.run_yql_query(query_str)).get('query').get('results')
-                Player.store_raw_info(player_id, results, **kwargs)
-                print player_id
+                if (int(args.start) <= int(id_reg.search(player_id).group(0)) and
+                        int(args.end) >= int(id_reg.search(player_id).group(0))):
+                    query_str = "select * from fantasysports.players where player_key='%s'" % player_id
+                    results = QueryManager.decode_query(query.run_yql_query(query_str)).get('query').get('results')
+                    Player.store_raw_info(player_id, results, **kwargs)
+                    print player_id
     else:
-        Player.query.set_sleep(int(args.sleep))
+        Player.query_manager.set_sleep(int(args.sleep))
         Player.find_all(**kwargs)
