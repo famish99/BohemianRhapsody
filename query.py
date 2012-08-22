@@ -60,16 +60,20 @@ class QueryManager:
         # Create our client.
         self.client = oauth.Client(self.consumer, self.auth_token)
 
-    def run_yql_query(self, query):
+    def run_yql_query(self, query, **kwargs):
         """
         Function to run simple queries for testing
         """
         params = self.yql_manager.get_query_params(query, None)
         query_string = urlencode(params)
+        retry = kwargs.get('retry', True)
         result = None
         while not result:
             raw_result = self.run_url_query('%s?%s&diagnostics=true' % (self.yql_manager.uri, query_string))
-            result = self.__class__.decode_query(raw_result).get('query').get('results')
+            if retry:
+                result = self.__class__.decode_query(raw_result).get('query').get('results')
+            else:
+                result = True
             if not result:
                 print 'No result returned, retrying query'
         return raw_result

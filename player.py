@@ -44,9 +44,12 @@ class Player:
         game = kwargs.get('game', 'nfl')
         with open(filename, 'w') as output:
             for player_id in range(start, end):
-                player_id = '%s.p.%04d' % (game, player_id)
+                if player_id < 10000:
+                    player_id = '%s.p.%04d' % (game, player_id)
+                else:
+                    player_id = '%s.p.%d' % (game, player_id)
                 query_str = "select * from fantasysports.players where player_key='%s'" % player_id
-                results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str)).get('query').get('results')
+                results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str, retry=False)).get('query').get('results')
                 if results:
                     results = results.get('player')
                     print '%s: True' % player_id
