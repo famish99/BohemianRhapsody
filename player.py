@@ -112,6 +112,9 @@ if __name__ == '__main__':
             with open('%s.new' % args.filename, 'w') as fwrite:
                 for player_id in fread:
                     player_id = player_id.strip()
+                    filename = os.path.join(args.directory, player_id)
+                    if not os.path.exists(filename):
+                        continue
                     p.load_player(player_id, **kwargs)
                     pos = p._raw_info.get('position_type')
                     if p.eligible_player():
@@ -119,7 +122,6 @@ if __name__ == '__main__':
                         fwrite.write('%s\n' % player_id)
                     else:
                         print '%s: %s: False' % (player_id, pos)
-                        filename = os.path.join(args.directory, player_id)
                         os.unlink(filename)
     else:
         Player.query_manager.set_sleep(int(args.sleep))

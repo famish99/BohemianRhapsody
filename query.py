@@ -106,8 +106,11 @@ class QueryManager:
             value_str = join_str.join(escaped_list)
             ret_query = self.run_yql_query(query_re.sub(value_str, query))
             key, results = self.__class__.decode_query(ret_query).get('query').get('results').popitem()
-            for result in results:
-                yield result
+            if isinstance(results, dict):
+                yield results
+            else:
+                for result in results:
+                    yield result
             index = index + block_size
 
     @staticmethod
