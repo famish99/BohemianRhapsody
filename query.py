@@ -26,7 +26,7 @@ class QueryManager:
         self.get_token()
 
         self._next_query = time.time()
-        self._time_between_queries = int(kwargs.get('sleep', 5))
+        self._time_between_queries = int(kwargs.get('sleep', 10))
 
     def set_sleep(self, interval):
         """
@@ -66,17 +66,23 @@ class QueryManager:
         """
         params = self.yql_manager.get_query_params(query, None)
         query_string = urlencode(params)
-        return self.run_url_query('%s?%s&diagnostics=true' % (self.yql_manager.uri, query_string))
+        result = None
+        while not result:
+            raw_result = self.run_url_query('%s?%s&diagnostics=true' % (self.yql_manager.uri, query_string))
+            result = self.__class__.decode_query(raw_result).get('query').get('results')
+            if not result:
+                print 'No result returned, retrying query'
+        return raw_result
 
     def run_url_query(self, query_url):
         """
         Function to run simple queries for testing
         """
-        self.get_token()
         current_time = time.time()
         if current_time < self._next_query:
             time.sleep(self._next_query - current_time)
         self._next_query = time.time() + self._time_between_queries
+        self.get_token()
         return self.client.request(query_url, "GET")
 
     def batch_query(self, query, value_list, **kwargs):
@@ -111,8 +117,12 @@ class QueryManager:
         
         @param query_obj: Object returned from run_*_query
         """
-        header, result = query_obj
-        decoded_result = json.loads(result)
+        try:
+            header, result = query_obj
+            decoded_result = json.loads(result)
+        except ValueError:
+            print query_obj, result
+            raise
         diag = decoded_result.get("query").get("diagnostics").get("url")
         if isinstance(diag, list):
             diag = diag.pop()
