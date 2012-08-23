@@ -38,7 +38,7 @@ class Player(models.Model):
         """
 
         start = kwargs.get('start', 0)
-        end = kwargs.get('end', 10000)
+        end = kwargs.get('end', 25000)
         filename = kwargs.get('filename', 'player.log')
         game = kwargs.get('game', 'nfl')
         with open(filename, 'w') as output:
