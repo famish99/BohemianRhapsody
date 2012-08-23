@@ -22,6 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('-l', '--league', action='store', dest='league', metavar='ID', help='League ID needed for queries')
     parser.add_argument('--raw', action='store_true', dest='raw', default=False,
             help='Grab player background data, turns --filename into an input flag')
+    parser.add_argument('-F', '--find', action='store_true', dest='find', default=False, help='Run player ID search on Yahoo DB')
     args = parser.parse_args()
     kwargs = {
             'start': int(args.start),
@@ -31,7 +32,10 @@ if __name__ == '__main__':
             'game': str(args.game),
             'league': str(args.league),
             }
-    if args.raw:
+    if args.find:
+        Player.query_manager.set_sleep(int(args.sleep))
+        Player.find_all(**kwargs)
+    elif args.raw:
         import re
         id_reg = re.compile('(\d+)$')
         query = QueryManager(sleep=args.sleep)
@@ -64,6 +68,3 @@ if __name__ == '__main__':
                     else:
                         print '%s: %s: False' % (player_id, pos)
                         os.unlink(filename)
-    else:
-        Player.query_manager.set_sleep(int(args.sleep))
-        Player.find_all(**kwargs)

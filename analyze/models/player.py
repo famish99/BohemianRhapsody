@@ -7,11 +7,23 @@ import os
 import pickle
 
 class Player(models.Model):
+    """
+    Player data model, contains just generic information about player
+    """
+
+    player_key = models.CharField(max_length=16)
+    position = models.CharField(max_length=16)
+    first_name = models.CharField(max_length=32)
+    last_name = models.CharField(max_length=32)
+    team_key = models.CharField(max_length=16)
+    team_name = models.CharField(max_length=32)
+    bye_week = models.CharField(max_length=8)
 
     query_manager = QueryManager()
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         self._raw_info = None
+        super(Player, self).__init__(*args, **kwargs)
 
     def load_raw(self, p_id, **kwargs):
         """
@@ -20,6 +32,20 @@ class Player(models.Model):
         filename = os.path.join(kwargs.get('directory'), p_id)
         with open(filename, 'r') as fread:
             self._raw_info = pickle.load(fread)
+
+    def load_db(self, **kwargs):
+        """
+        Load data from raw files into db
+        """
+        join_str = ','
+
+        self.player_key = self._raw_info.get('player_key') 
+        self.position   = join_str.join(self._raw_info.get('eligible_positions').values())
+        self.first_name = self._raw_info.get('name').get('first')
+        self.last_name  = self._raw_info.get('name').get('last')
+        self.team_key   = self._raw_info.get('editorial_team_key')
+        self.team_name  = self._raw_info.get('editorial_team_full_name')
+        self.bye_week   = self._raw_info.get('bye_weeks').get('week')
 
     def eligible_player(self, **kwargs):
         """
