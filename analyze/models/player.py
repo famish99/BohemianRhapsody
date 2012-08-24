@@ -40,7 +40,10 @@ class Player(models.Model):
         join_str = ','
 
         self.player_key = self._raw_info.get('player_key') 
-        self.position   = join_str.join(self._raw_info.get('eligible_positions').values())
+        position = self._raw_info.get('eligible_positions').get('position')
+        if isinstance(position, list):
+            position = join_str.join(position)
+        self.position = position
         self.first_name = self._raw_info.get('name').get('first')
         self.last_name  = self._raw_info.get('name').get('last')
         self.team_key   = self._raw_info.get('editorial_team_key')

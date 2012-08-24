@@ -2,13 +2,15 @@
 """
 Player info management
 """
-from utils.query import QueryManager
-from analyze.models.player import Player
 import os
 import pickle
 
 if __name__ == '__main__':
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fantasy.settings")
+
     from argparse import ArgumentParser
+    from utils.query import QueryManager
+    from analyze.models.player import Player
 
     parser = ArgumentParser()
     parser.add_argument('-s', '--start', action='store', dest='start', metavar='n',  default=0, help='Index to begin search')
@@ -23,6 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--raw', action='store_true', dest='raw', default=False,
             help='Grab player background data, turns --filename into an input flag')
     parser.add_argument('-F', '--find', action='store_true', dest='find', default=False, help='Run player ID search on Yahoo DB')
+    parser.add_argument('-L', '--load', action='store_true', dest='load', default=False, help='Load player data from file into db')
     args = parser.parse_args()
     kwargs = {
             'start': int(args.start),
@@ -68,3 +71,14 @@ if __name__ == '__main__':
                     else:
                         print '%s: %s: False' % (player_id, pos)
                         os.unlink(filename)
+    elif args.load:
+        files = os.listdir(args.directory)
+        for player_id in files:
+            print player_id
+            if Player.objects.filter(player_key=player_id).exists():
+                continue
+            p = Player()
+            p.load_raw(player_id, **kwargs)
+            p.load_db()
+            p.save()
+            print '%s %s' % (p.first_name, p.last_name)
