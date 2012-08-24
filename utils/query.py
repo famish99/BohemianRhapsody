@@ -133,6 +133,6 @@ class QueryManager:
         diag = decoded_result.get("query").get("diagnostics").get("url")
         if isinstance(diag, list):
             diag = diag.pop()
-        if diag.get("http-status-code") == '999':
+        if diag and diag.get("http-status-code") == '999':
             raise ValueError("%s: %s" % (diag.get("http-status-code"), diag.get('http-status-message')))
         return decoded_result
