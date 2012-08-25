@@ -11,7 +11,7 @@ class Player(models.Model):
     Player data model, contains just generic information about player
     """
 
-    player_key = models.CharField(max_length=16)
+    player_key = models.CharField(max_length=16, unique=True)
     position = models.CharField(max_length=16)
     first_name = models.CharField(max_length=32)
     last_name = models.CharField(max_length=32)
@@ -24,6 +24,9 @@ class Player(models.Model):
     def __init__(self, *args, **kwargs):
         self._raw_info = None
         super(Player, self).__init__(*args, **kwargs)
+
+    def __unicode__(self):
+        return '%s: %s %s' % (self.player_key, self.first_name, self.last_name)
 
     def load_raw(self, p_id, **kwargs):
         """
@@ -96,6 +99,30 @@ class Player(models.Model):
         filename = os.path.join(kwargs.get('directory'), p_id)
         with open(filename, 'w') as output:
             pickle.dump(result, output)
+
+    @classmethod
+    def get_stats(cls, league_key, week, **kwargs):
+        """
+        Get stat data for the player
+        """
+        import analyze.models.stats as stats
+        #player_list = [p.player_key for p in cls.objects.all()]
+        player_list = []
+        for p in cls.objects.all():
+            if not p.stats.filter(week_num=week).exists():
+                player_list.append(p.player_key)
+            else:
+                print 'Data exists for %s week %d' % (p.player_key, week)
+        query_str = "select player_key, player_stats from fantasysports.players.stats where league_key='%s' and player_key in (value) and stats_type='week' and stats_week='%s'" % (league_key, str(week))
+        for result in cls.query_manager.batch_query(query_str, player_list):
+            p_key = result.get('player_key')
+            player = cls.objects.get(player_key=p_key)
+            print "%s week %d" % (player, week)
+            p_stats = stats.PlayerStats()
+            p_stats.player = player
+            p_stats.week_num = week
+            p_stats.load_stats(result)
+            p_stats.save()
 
     class Meta:
         """ Metadata class for Player """

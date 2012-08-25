@@ -26,6 +26,8 @@ if __name__ == '__main__':
             help='Grab player background data, turns --filename into an input flag')
     parser.add_argument('-F', '--find', action='store_true', dest='find', default=False, help='Run player ID search on Yahoo DB')
     parser.add_argument('-L', '--load', action='store_true', dest='load', default=False, help='Load player data from file into db')
+    parser.add_argument('--stats', action='store_true', dest='stats', default=False, help='Load stat data into db from yahoo')
+    parser.add_argument('-w', '--week', action='store', dest='week',  metavar='n', help='Statisical week number to query', nargs='*')
     args = parser.parse_args()
     kwargs = {
             'start': int(args.start),
@@ -82,3 +84,7 @@ if __name__ == '__main__':
             p.load_db()
             p.save()
             print '%s %s' % (p.first_name, p.last_name)
+    elif args.stats:
+        Player.query_manager.set_sleep(int(args.sleep))
+        for week in args.week:
+            Player.get_stats(args.league, int(week), **kwargs)

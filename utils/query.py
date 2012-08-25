@@ -75,6 +75,7 @@ class QueryManager:
             else:
                 result = True
             if not result:
+                print self.__class__.decode_query(raw_result)
                 print 'No result returned, retrying query'
         return raw_result
 
