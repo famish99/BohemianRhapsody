@@ -2,9 +2,8 @@
 *.pyc
 cache
 oauth*
-sample_code
-yql-0.2
 player_data
 *player_log*
 secret.py
 fantasy.db
+resources

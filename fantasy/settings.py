@@ -59,7 +59,7 @@ MEDIA_URL = ''
 # Don't put anything in this directory yourself; store your static files
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
+STATIC_ROOT = '/home/media/BohemianRhapsody/sitestatic'
 
 # URL prefix for static files.
 # Example: "http://media.lawrence.com/static/"
@@ -67,6 +67,8 @@ STATIC_URL = '/static/'
 
 # Additional locations of static files
 STATICFILES_DIRS = (
+    '/home/media/css',
+    '/home/media/js',
     # Put strings here, like "/home/html/static" or "C:/www/django/static".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
@@ -106,6 +108,7 @@ ROOT_URLCONF = 'fantasy.urls'
 WSGI_APPLICATION = 'fantasy.wsgi.application'
 
 TEMPLATE_DIRS = (
+    '/home/media/template',
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.

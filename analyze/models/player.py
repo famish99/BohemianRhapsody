@@ -118,11 +118,14 @@ class Player(models.Model):
             p_key = result.get('player_key')
             player = cls.objects.get(player_key=p_key)
             print "%s week %d" % (player, week)
-            p_stats = stats.PlayerStats()
-            p_stats.player = player
-            p_stats.week_num = week
-            p_stats.load_stats(result)
-            p_stats.save()
+            try:
+                p_stats = stats.PlayerStats()
+                p_stats.player = player
+                p_stats.week_num = week
+                p_stats.load_stats(result)
+                p_stats.save()
+            except ValueError as e:
+                print e
 
     class Meta:
         """ Metadata class for Player """

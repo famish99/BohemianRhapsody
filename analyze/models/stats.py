@@ -76,7 +76,10 @@ class PlayerStats(models.Model):
 
         @param result: The decoded query
         """
-        stat_list = result.get('player_stats').get('stats').get('stat')
+        p_stat = result.get('player_stats').get('stats')
+        if not p_stat:
+            raise ValueError('No stats for player')
+        stat_list = p_stat.get('stat')
         for item in stat_list:
             key = item.get('stat_id')
             value = int(item.get('value'))
