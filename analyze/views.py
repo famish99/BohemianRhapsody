@@ -14,10 +14,10 @@ def template_factory(base_class, name):
         Provide the base site context
         """
         nav_list = SortedDict([
-                ('home', {'name': 'Home', 'ref': '#', 'active': False}),
-                ('players', {'name': 'NFL Players', 'ref': '#', 'active': False}),
-                ('managers', {'name': 'Fantasy Managers', 'ref': '#', 'active': False}),
-                ])
+            ('home', {'name': 'Home', 'ref': '/', 'active': False}),
+            ('players', {'name': 'NFL Players', 'ref': '/players', 'active': False}),
+            #('managers', {'name': 'Fantasy Managers', 'ref': '#', 'active': False}),
+            ])
 
         def get_context_data(self, **kwargs):
             """
@@ -30,6 +30,7 @@ def template_factory(base_class, name):
                     value['active'] = True
                 link_list.append(value)
             context['nav_list'] = link_list
+            context['page_title'] = self.__class__.page_title
             return context
 
     return BaseView
@@ -43,6 +44,7 @@ class HomeView(HTemplateView):
     View class for home page
     """
     template_name = 'home.html'
+    page_title = 'Home'
 
 
 class PlayerList(PListView):
@@ -51,3 +53,4 @@ class PlayerList(PListView):
     """
     model = Player
     template_name = 'list.html'
+    page_title = 'Players Home'
