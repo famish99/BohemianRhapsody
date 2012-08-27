@@ -18,6 +18,7 @@ class Player(models.Model):
     team_key = models.CharField(max_length=16)
     team_name = models.CharField(max_length=32)
     bye_week = models.CharField(max_length=8)
+    season_points = models.FloatField(default=0.0, null=False)
 
     query_manager = QueryManager()
 
@@ -61,6 +62,15 @@ class Player(models.Model):
         eligible_positions = kwargs.get('positions', ('O', 'K'))
         position_type = self._raw_info.get('position_type', 'X')
         return position_type in eligible_positions
+
+    def _season_points(self, **kwargs):
+        """
+        Calculate points for the whole season
+        """
+        points = 0.0
+        for stat in self.stats.all():
+            points += stat.total_points()
+        return points
 
     @classmethod
     def find_all(cls, **kwargs):
@@ -124,6 +134,8 @@ class Player(models.Model):
                 p_stats.week_num = week
                 p_stats.load_stats(result)
                 p_stats.save()
+                player.season_points = player._season_points()
+                player.save()
             except ValueError as e:
                 print e
 

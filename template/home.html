@@ -1,2 +1,13 @@
 {% extends 'base.html' %}
 
+{% block content %}
+<div class="row">
+    <h1>Choose year</h1>
+</div>
+{% for year in year_list %}
+<div class="row">
+<a href="/{{ year }}/players/">Fantasy Year {{ year }}</a>
+</div>
+{% endfor %}
+{% endblock %}
+

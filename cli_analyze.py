@@ -25,7 +25,7 @@ if __name__ == '__main__':
     parser.add_argument('--raw', action='store_true', dest='raw', default=False,
             help='Grab player background data, turns --filename into an input flag')
     parser.add_argument('-F', '--find', action='store_true', dest='find', default=False, help='Run player ID search on Yahoo DB')
-    parser.add_argument('-L', '--load', action='store_true', dest='load', default=False, help='Load player data from file into db')
+    parser.add_argument('-L', '--load', action='store_true', dest='load', default=False, help='Load player data from files into db, use --directory to locate files')
     parser.add_argument('--stats', action='store_true', dest='stats', default=False, help='Load stat data into db from yahoo')
     parser.add_argument('-w', '--week', action='store', dest='week',  metavar='n', help='Statisical week number to query', nargs='*')
     args = parser.parse_args()
