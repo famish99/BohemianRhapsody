@@ -5,6 +5,7 @@ from django.views.generic import DetailView
 from django.views.generic import ListView
 from django.views.generic.base import TemplateView
 from django.utils.datastructures import SortedDict
+from django.db.models import Q
 from analyze.models.player import Player
 from urllib import urlencode
 import copy
@@ -96,8 +97,14 @@ class PlayerList(PListView):
         queryset = Player.objects.filter(player_key__contains=year_key)
         queryset = queryset.filter(season_points__gt=0)
         position = self.request.GET.get('position', 'all')
+        name = self.request.GET.get('name')
         if position in ('QB', 'WR', 'RB', 'TE', 'K'):
             queryset = queryset.filter(position__contains=position)
+        if name:
+            queryset = queryset.filter(
+                    Q(first_name__icontains=name) |
+                    Q(last_name__icontains=name)
+                    )
         queryset = queryset.order_by('-season_points')
         return queryset
 
@@ -105,6 +112,10 @@ class PlayerList(PListView):
         context = super(PlayerList, self).get_context_data(**kwargs)
         page_vars = {}
         positions = copy.deepcopy(self.__class__.positions)
+        name = self.request.GET.get('name')
+        if name:
+            page_vars['name'] = name
+            context['player_name'] = name
         position = self.request.GET.get('position')
         if position:
             page_vars['position'] = position

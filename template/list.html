@@ -8,7 +8,11 @@
         <div class="control-group">
             <label class="control-label" for="search_pos">Name:</label>
             <div class="controls">
-                <input type="text" placeholder="Player Name" id="name">
+                {% if player_name %}
+                <input type="text" value="{{ player_name }}" id="player_name">
+                {% else %}
+                <input type="text" placeholder="Player Name" id="player_name">
+                {% endif %}
             </div>
         </div>
         <div class="control-group">
@@ -47,6 +51,7 @@
     </tr>
     {% endfor %}
     </table>
+    {% if paginator.num_pages > 1 %}
     {% if page_obj.has_previous %}
     <div class="row offset4">
         <span class="span1">
@@ -66,5 +71,6 @@
         </span>
         {% endif %}
     </div>
+    {% endif %}
 </div>
 {% endblock %}
