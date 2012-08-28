@@ -2,7 +2,35 @@
 
 {% block content %}
 <div class="span12">
-    <h1>NFL Players List</h1>
+    <h2>NFL Players List</h2>
+    <form class="form-horizontal">
+        <legend>Filter Controls</legend>
+        <div class="control-group">
+            <label class="control-label" for="search_pos">Name:</label>
+            <div class="controls">
+                <input type="text" placeholder="Player Name" id="name">
+            </div>
+        </div>
+        <div class="control-group">
+            <label class="control-label" for="search_pos">Position:</label>
+            <div class="controls">
+                <select id="search_pos">
+                {% for value, item in search_position %}
+                {% if item.selected %}
+                <option selected="selected" value={{ value }}>{{ item.label }}</option>
+                {% else %}
+                <option value={{ value }}>{{ item.label }}</option>
+                {% endif %}
+                {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="control-group">
+            <div class="controls">
+                <a id="run_filter" href="javascript://" class="btn btn-primary">Search</a>
+            </div>
+        </div>
+    </form>
     <table class="table table-condensed">
         <tr>
             <th><a href='#'>Name</a></th>

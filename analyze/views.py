@@ -7,6 +7,7 @@ from django.views.generic.base import TemplateView
 from django.utils.datastructures import SortedDict
 from analyze.models.player import Player
 from urllib import urlencode
+import copy
 
 
 def template_factory(base_class, name):
@@ -25,6 +26,8 @@ def template_factory(base_class, name):
             ('2012', '273'),
             ])
 
+        script_list = []
+
         def get_context_data(self, **kwargs):
             """
             Give base site context
@@ -32,17 +35,17 @@ def template_factory(base_class, name):
             context = super(BaseView, self).get_context_data(**kwargs)
             link_list = []
             for key, value in self.__class__.nav_list.items():
-                add_value = {}
+                add_value = value.copy()
                 add_value['ref'] = "/%s/%s" % (self.kwargs.get('year'), value['ref'])
                 if key == name:
                     add_value['active'] = True
                 else:
                     add_value['active'] = False
-                add_value['name'] = value['name']
                 link_list.append(add_value)
             context['nav_list'] = link_list
             context['year'] = self.kwargs.get('year')
             context['page_title'] = self.__class__.page_title
+            context['script_list'] = self.__class__.script_list
             return context
 
     return BaseView
@@ -69,16 +72,31 @@ class PlayerList(PListView):
     """
     View class for player list
     """
-    paginate_by = 30
-    template_name = 'player_list.html'
+    paginate_by = 25
+    template_name = 'list.html'
     page_title = 'Players Home'
+
+    script_list = [
+            '/static/jquery.js',
+            '/static/common.js',
+            '/static/player_list.js',
+            ]
+
+    positions = SortedDict([
+        ('all', {'label': 'All', 'selected': False}),
+        ('QB' , {'label': 'QB' , 'selected': False}),
+        ('WR' , {'label': 'WR' , 'selected': False}),
+        ('RB' , {'label': 'RB' , 'selected': False}),
+        ('TE' , {'label': 'TE' , 'selected': False}),
+        ('K'  , {'label': 'K'  , 'selected': False}),
+        ])
 
     def get_queryset(self):
         year_key = self.__class__.year_keys.get(self.kwargs.get('year'), '257')
         queryset = Player.objects.filter(player_key__contains=year_key)
         queryset = queryset.filter(season_points__gt=0)
-        position = self.request.GET.get('position')
-        if position:
+        position = self.request.GET.get('position', 'all')
+        if position in ('QB', 'WR', 'RB', 'TE', 'K'):
             queryset = queryset.filter(position__contains=position)
         queryset = queryset.order_by('-season_points')
         return queryset
@@ -86,9 +104,11 @@ class PlayerList(PListView):
     def get_context_data(self, **kwargs):
         context = super(PlayerList, self).get_context_data(**kwargs)
         page_vars = {}
+        positions = copy.deepcopy(self.__class__.positions)
         position = self.request.GET.get('position')
         if position:
             page_vars['position'] = position
+            positions[position]['selected'] = True
         page_obj = context['page_obj']
         if page_obj.has_previous():
             page_vars['page'] = page_obj.previous_page_number()
@@ -96,4 +116,5 @@ class PlayerList(PListView):
         if page_obj.has_next():
             page_vars['page'] = page_obj.next_page_number()
             context['next_page'] = urlencode(page_vars)
+        context['search_position'] = positions.items()
         return context
