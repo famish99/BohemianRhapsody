@@ -6,6 +6,7 @@ from django.views.generic import ListView
 from django.views.generic.base import TemplateView
 from django.utils.datastructures import SortedDict
 from django.db.models import Q
+from analyze.models.stats import STATS
 from analyze.models.player import Player
 from urllib import urlencode
 import copy
@@ -54,6 +55,7 @@ def template_factory(base_class, name):
 
 HTemplateView = template_factory(TemplateView, 'home')
 PListView = template_factory(ListView, 'players')
+PDetailView = template_factory(DetailView, 'players')
 
 class HomeView(HTemplateView):
     """
@@ -66,6 +68,35 @@ class HomeView(HTemplateView):
     def get_context_data(self, **kwargs):
         context = super(HomeView, self).get_context_data(**kwargs)
         context['year_list'] = self.__class__.year_keys.keys()
+        return context
+
+
+class PlayerDetail(PDetailView):
+    """
+    View class for individual player detail
+    """
+    template_name = 'player_detail.html'
+    page_title = 'Player Detail'
+    model = Player
+
+    def get_context_data(self, **kwargs):
+        context = super(PlayerDetail, self).get_context_data(**kwargs)
+        player = context['object']
+        stat_list = player.stats.all()
+        stat_keys = filter(lambda x: x not in ['57'], stat_list[0].stat_data.keys())
+        columns = filter(lambda x: x[0] in stat_keys, STATS.items())
+        stat_headers = [ stat_item[1][0] for stat_item in columns ]
+        stat_headers.insert(0, 'Week #')
+        stat_headers.append('Points')
+        context['stat_headers'] = stat_headers
+        context['stat_list'] = []
+        for stat in stat_list:
+            stat_week = []
+            stat_week.append(stat.week_num)
+            for key, value in columns:
+                stat_week.append(stat.stat_data[key])
+            stat_week.append(stat.total_points())
+            context['stat_list'].append(stat_week)
         return context
 
 
@@ -98,6 +129,7 @@ class PlayerList(PListView):
         queryset = queryset.filter(season_points__gt=0)
         position = self.request.GET.get('position', 'all')
         name = self.request.GET.get('name')
+        sort = self.request.GET.get('sort')
         if position in ('QB', 'WR', 'RB', 'TE', 'K'):
             queryset = queryset.filter(position__contains=position)
         if name:
@@ -105,7 +137,13 @@ class PlayerList(PListView):
                     Q(first_name__icontains=name) |
                     Q(last_name__icontains=name)
                     )
-        queryset = queryset.order_by('-season_points')
+        # Test out sorting by method for later calculation purposes
+        # and advanced sorting purposes
+        if sort == "test":
+            queryset = list(queryset)
+            queryset.sort(key=lambda x: x._season_points(), reverse=True)
+        else:
+            queryset = queryset.order_by('-season_points')
         return queryset
 
     def get_context_data(self, **kwargs):

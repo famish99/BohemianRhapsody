@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="span10 offset1">
+    <div class="page-header">
+        <h1>{{ object.first_name }} {{ object.last_name }} <small>{{ object.team_name }}</small></h1>
+    </div>
+    <legend>Weekly Stats</legend>
+    <div class="span9">
+        <table class="table table-condensed table-bordered">
+            <tr>
+                {% for header in stat_headers %}
+                <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+            {% for stat in stat_list %}
+            <tr>
+                {% for item in stat %}
+                <td>{{ item }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}
