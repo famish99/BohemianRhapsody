@@ -40,7 +40,8 @@
             <th><a href='#'>Name</a></th>
             <th>Team</th>
             <th><a href='#'>Position</a></th>
-            <th><a href='#'>Points</a></th>
+            <th><a href='#'>Season Total</a></th>
+            <th><a href='#'>Average</a></th>
         </tr>
     {% for item in object_list %}
     <tr>
@@ -48,6 +49,7 @@
         <td>{{ item.team_name }}</td>
         <td>{{ item.position }}</td>
         <td>{{ item.season_points }}</td>
+        <td>{{ item.mean_points }} &plusmn;{{ item.std_dev_points }}</td>
     </tr>
     {% endfor %}
     </table>

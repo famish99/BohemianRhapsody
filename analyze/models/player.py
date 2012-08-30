@@ -5,6 +5,7 @@ from utils.query import QueryManager
 from django.db import models
 import os
 import pickle
+import numpypy
 
 class Player(models.Model):
     """
@@ -23,8 +24,9 @@ class Player(models.Model):
     query_manager = QueryManager()
 
     def __init__(self, *args, **kwargs):
-        self._raw_info = None
         super(Player, self).__init__(*args, **kwargs)
+        self._raw_info = None
+        self._points = None
 
     def __unicode__(self):
         return '%s: %s %s' % (self.player_key, self.first_name, self.last_name)
@@ -63,14 +65,54 @@ class Player(models.Model):
         position_type = self._raw_info.get('position_type', 'X')
         return position_type in eligible_positions
 
+    def get_points(self, **kwargs):
+        """
+        Return a list of the points scored
+        """
+        raw_points = [ stat.total_points() for stat in self.stats.exclude(
+            week_num=int(self.bye_week))
+            ]
+        if kwargs.get('raw'):
+            self._points = raw_points
+        else:
+            self._points = filter(lambda x: x != 0, raw_points)
+        return self._points
+
     def _season_points(self, **kwargs):
         """
         Calculate points for the whole season
         """
-        points = 0.0
-        for stat in self.stats.all():
-            points += stat.total_points()
-        return points
+        if not self._points:
+            self.get_points()
+        return numpypy.sum(self._points)
+
+    def mean_points(self, **kwargs):
+        """
+        Return the mean score
+        """
+        if not self._points:
+            self.get_points()
+        return round(numpypy.mean(self._points), 2)
+
+    def median_points(self, **kwargs):
+        """
+        Return median score
+        """
+        if not self._points:
+            self.get_points()
+        if len(self._points) % 2:
+            return sorted(self._points)[len(self._points)/2]
+        else:
+            mid = len(self._points) / 2
+            return numpypy.mean(sorted(self._points)[(mid - 1):(mid + 1)])
+
+    def std_dev_points(self, **kwargs):
+        """
+        Return score variance
+        """
+        if not self._points:
+            self.get_points()
+        return round(numpypy.std(self._points), 2)
 
     @classmethod
     def find_all(cls, **kwargs):

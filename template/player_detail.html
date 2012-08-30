@@ -22,5 +22,20 @@
             {% endfor %}
         </table>
     </div>
+    <legend>Statistical Analysis</legend>
+    <div class="span3">
+        <table class="table table-condensed">
+            <tr>
+                <th>Stat</th>
+                <th>Value</th>
+            </tr>
+            {% for name, value in stat_rows %}
+            <tr>
+                <td>{{ name }}</td>
+                <td>{{ value }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 </div>
 {% endblock %}

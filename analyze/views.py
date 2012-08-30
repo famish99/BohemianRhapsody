@@ -91,12 +91,22 @@ class PlayerDetail(PDetailView):
         context['stat_headers'] = stat_headers
         context['stat_list'] = []
         for stat in stat_list:
+            if int(player.bye_week) == stat.week_num:
+                continue
+            total_points = stat.total_points()
             stat_week = []
             stat_week.append(stat.week_num)
             for key, value in columns:
                 stat_week.append(stat.stat_data[key])
-            stat_week.append(stat.total_points())
+            stat_week.append(total_points)
             context['stat_list'].append(stat_week)
+        points = player.get_points()
+        context['stat_rows'] = [
+                ("Mean", player.mean_points()),
+                ("Std Dev", player.std_dev_points()),
+                ("Median", player.median_points()),
+                ("Games Played", len(points)),
+                ]
         return context
 
 
