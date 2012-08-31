@@ -122,6 +122,11 @@ class Player(models.Model):
             self.get_points()
         return len(self.get_points())
 
+    def risk_factor(self):
+        if not self._points:
+            self.get_points()
+        return round((self.std_dev_points() / self.mean_points() * 100), 2)
+
 
     @classmethod
     def find_all(cls, **kwargs):

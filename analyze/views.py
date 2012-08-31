@@ -119,6 +119,7 @@ class PlayerDetail(PDetailView):
                 ("Std Dev", player.std_dev_points()),
                 ("Median", player.median_points()),
                 ("Games Played", player.games_played()),
+                ("Risk Factor", '%f%%' % player.risk_factor),
                 ]
         return context
 
@@ -146,6 +147,14 @@ class PlayerList(PListView):
         ('K'  , {'label': 'K'  , 'selected': False}),
         ])
 
+    sort_methods = SortedDict([
+        ('total',  {'label': 'Total', 'selected': False}),
+        ('risk',   {'label': 'Risk', 'selected': False}),
+        ('upside', {'label': 'Upside', 'selected': False}),
+        ('std',    {'label': 'Std Dev', 'selected': False}),
+        ('avg',    {'label': 'Mean', 'selected': False}),
+        ])
+
     def get_queryset(self):
         year_key = self.__class__.year_keys.get(self.kwargs.get('year'), '257')
         queryset = Player.objects.filter(player_key__contains=year_key)
@@ -161,33 +170,40 @@ class PlayerList(PListView):
                     Q(first_name__icontains=name) |
                     Q(last_name__icontains=name)
                     )
-        # Test out sorting by method for later calculation purposes
-        # and advanced sorting purposes
-        if sort == "risk":
+        if sort == 'risk':
             queryset = list(queryset)
             queryset = filter(lambda x: x.std_dev_points() > 1, queryset)
             queryset.sort(key=lambda x: x.std_dev_points()/x.mean_points()/x.games_played(), reverse=(reverse))
-        elif sort == "upside":
+        elif sort == 'upside':
             queryset = list(queryset)
             queryset = filter(lambda x: x.std_dev_points() > 1, queryset)
             queryset.sort(key=lambda x: x.std_dev_points()*x.games_played(), reverse=(not reverse))
-        elif sort == "std":
+        elif sort == 'std':
             queryset = list(queryset)
             queryset.sort(key=lambda x: x.std_dev_points(), reverse=(not reverse))
-        elif sort == "avg":
+        elif sort == 'avg':
             queryset = list(queryset)
             queryset.sort(key=lambda x: x.mean_points(), reverse=(not reverse))
         else:
-            queryset = queryset.order_by('-season_points')
+            if reverse:
+                queryset = queryset.order_by('season_points')
+            else:
+                queryset = queryset.order_by('-season_points')
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super(PlayerList, self).get_context_data(**kwargs)
         page_vars = {}
         positions = copy.deepcopy(self.__class__.positions)
+        sort_methods = copy.deepcopy(self.__class__.sort_methods)
         sort = self.request.GET.get('sort')
         if sort:
             page_vars['sort'] = sort
+            sort_methods[sort]['selected'] = True
+        reverse = bool(self.request.GET.get('reverse'))
+        if reverse:
+            page_vars['reverse'] = reverse
+            context['reverse'] = reverse
         name = self.request.GET.get('name')
         if name:
             page_vars['name'] = name
@@ -204,4 +220,5 @@ class PlayerList(PListView):
             page_vars['page'] = page_obj.next_page_number()
             context['next_page'] = urlencode(page_vars)
         context['search_position'] = positions.items()
+        context['sort_methods'] = sort_methods.items()
         return context

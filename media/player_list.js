@@ -1,6 +1,10 @@
 function run_search() {
     var parms = {};
     parms['position'] = $("#search_pos").val();
+    parms['sort'] = $("#sort").val();
+    if($("#reverse").attr("checked")){
+        parms['reverse'] = true;
+    }
     if($("#player_name").val()){
         parms['name'] = $("#player_name").val();
     }
