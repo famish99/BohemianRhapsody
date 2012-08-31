@@ -10,6 +10,7 @@ from analyze.models.stats import STATS
 from analyze.models.player import Player
 from urllib import urlencode
 import copy
+import numpypy
 
 
 def template_factory(base_class, name):
@@ -90,6 +91,7 @@ class PlayerDetail(PDetailView):
         stat_headers.append('Points')
         context['stat_headers'] = stat_headers
         context['stat_list'] = []
+        column_lists = { key: [] for key, value in columns }
         for stat in stat_list:
             if int(player.bye_week) == stat.week_num:
                 continue
@@ -98,14 +100,25 @@ class PlayerDetail(PDetailView):
             stat_week.append(stat.week_num)
             for key, value in columns:
                 stat_week.append(stat.stat_data[key])
+                column_lists[key].append(stat.stat_data[key])
             stat_week.append(total_points)
             context['stat_list'].append(stat_week)
+        avg_stats = ['Avg']
+        for key, value in columns:
+            avg_str = "%.1f &plusmn; %.1f" % (
+                    numpypy.mean(column_lists[key]),
+                    numpypy.std(column_lists[key]),
+                    )
+            avg_stats.append(avg_str)
+        avg_stats.append(player.mean_points())
+        context['stat_list'].append(avg_stats)
         points = player.get_points()
         context['stat_rows'] = [
+                ("Total Points", player._season_points()),
                 ("Mean", player.mean_points()),
                 ("Std Dev", player.std_dev_points()),
                 ("Median", player.median_points()),
-                ("Games Played", len(points)),
+                ("Games Played", player.games_played()),
                 ]
         return context
 
@@ -140,6 +153,7 @@ class PlayerList(PListView):
         position = self.request.GET.get('position', 'all')
         name = self.request.GET.get('name')
         sort = self.request.GET.get('sort')
+        reverse = bool(self.request.GET.get('reverse'))
         if position in ('QB', 'WR', 'RB', 'TE', 'K'):
             queryset = queryset.filter(position__contains=position)
         if name:
@@ -149,9 +163,20 @@ class PlayerList(PListView):
                     )
         # Test out sorting by method for later calculation purposes
         # and advanced sorting purposes
-        if sort == "test":
+        if sort == "risk":
             queryset = list(queryset)
-            queryset.sort(key=lambda x: x._season_points(), reverse=True)
+            queryset = filter(lambda x: x.std_dev_points() > 1, queryset)
+            queryset.sort(key=lambda x: x.std_dev_points()/x.mean_points()/x.games_played(), reverse=(reverse))
+        elif sort == "upside":
+            queryset = list(queryset)
+            queryset = filter(lambda x: x.std_dev_points() > 1, queryset)
+            queryset.sort(key=lambda x: x.std_dev_points()*x.games_played(), reverse=(not reverse))
+        elif sort == "std":
+            queryset = list(queryset)
+            queryset.sort(key=lambda x: x.std_dev_points(), reverse=(not reverse))
+        elif sort == "avg":
+            queryset = list(queryset)
+            queryset.sort(key=lambda x: x.mean_points(), reverse=(not reverse))
         else:
             queryset = queryset.order_by('-season_points')
         return queryset
@@ -160,6 +185,9 @@ class PlayerList(PListView):
         context = super(PlayerList, self).get_context_data(**kwargs)
         page_vars = {}
         positions = copy.deepcopy(self.__class__.positions)
+        sort = self.request.GET.get('sort')
+        if sort:
+            page_vars['sort'] = sort
         name = self.request.GET.get('name')
         if name:
             page_vars['name'] = name

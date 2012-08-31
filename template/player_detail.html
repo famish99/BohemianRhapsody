@@ -15,9 +15,11 @@
             </tr>
             {% for stat in stat_list %}
             <tr>
+                {% autoescape off %}
                 {% for item in stat %}
                 <td>{{ item }}</td>
                 {% endfor %}
+                {% endautoescape %}
             </tr>
             {% endfor %}
         </table>
@@ -32,7 +34,9 @@
             {% for name, value in stat_rows %}
             <tr>
                 <td>{{ name }}</td>
+                {% autoescape off %}
                 <td>{{ value }}</td>
+                {% endautoescape %}
             </tr>
             {% endfor %}
         </table>

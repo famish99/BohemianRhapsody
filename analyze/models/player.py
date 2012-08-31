@@ -114,6 +114,15 @@ class Player(models.Model):
             self.get_points()
         return round(numpypy.std(self._points), 2)
 
+    def games_played(self, **kwargs):
+        """
+        Return number of non-zero games
+        """
+        if not self._points:
+            self.get_points()
+        return len(self.get_points())
+
+
     @classmethod
     def find_all(cls, **kwargs):
         """
