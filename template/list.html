@@ -18,7 +18,7 @@
         <div class="control-group">
             <label class="control-label" for="search_pos">Position:</label>
             <div class="controls">
-                <select id="search_pos">
+                <select class="input-small" id="search_pos">
                 {% for value, item in search_position %}
                 {% if item.selected %}
                 <option selected="selected" value={{ value }}>{{ item.label }}</option>
@@ -33,7 +33,7 @@
             <div class="control-group">
                 <label class="control-label" for="sort">Sort:</label>
                 <div class="controls">
-                    <select id="sort">
+                    <select id="sort" class="input-medium">
                     {% for value, item in sort_methods %}
                     {% if item.selected %}
                     <option selected="selected" value={{ value }}>{{ item.label }}</option>
@@ -65,6 +65,7 @@
             <th>Position</th>
             <th>Season Total</th>
             <th>Average</th>
+            <th>Median</th>
             <th>Games Played</th>
             <th>Risk Factor</th>
         </tr>
@@ -75,6 +76,7 @@
         <td>{{ item.position }}</td>
         <td>{{ item.season_points }}</td>
         <td>{{ item.mean_points }} &plusmn;{{ item.std_dev_points }}</td>
+        <td>{{ item.median_points }}</td>
         <td>{{ item.games_played }}</td>
         <td>{{ item.risk_factor }}%</td>
     </tr>

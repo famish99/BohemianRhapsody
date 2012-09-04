@@ -118,8 +118,10 @@ class PlayerDetail(PDetailView):
                 ("Mean", player.mean_points()),
                 ("Std Dev", player.std_dev_points()),
                 ("Median", player.median_points()),
+                ("Floor", player.floor_points()),
+                ("Ceiling", player.ceiling_points()),
                 ("Games Played", player.games_played()),
-                ("Risk Factor", '%f%%' % player.risk_factor),
+                ("Risk Factor", '%.2f%%' % player.risk_factor()),
                 ]
         return context
 
@@ -148,11 +150,15 @@ class PlayerList(PListView):
         ])
 
     sort_methods = SortedDict([
-        ('total',  {'label': 'Total', 'selected': False}),
-        ('risk',   {'label': 'Risk', 'selected': False}),
-        ('upside', {'label': 'Upside', 'selected': False}),
-        ('std',    {'label': 'Std Dev', 'selected': False}),
-        ('avg',    {'label': 'Mean', 'selected': False}),
+        ('total',  {'label': 'Total',       'selected': False, 'method': lambda x: x.season_points, 'reverse': lambda x: not x}),
+        ('avg',    {'label': 'Mean',        'selected': False, 'method': lambda x: x.mean_points(), 'reverse': lambda x: not x}),
+        ('std',    {'label': 'Std Dev',     'selected': False, 'method': lambda x: x.std_dev_points(), 'reverse': lambda x: not x}),
+        ('cst',    {'label': 'Consistency', 'selected': False, 'method': lambda x: x.std_dev_points()/x.mean_points()/x.games_played(), 'reverse': lambda x: x}),
+        ('risk',   {'label': 'Risk',        'selected': False, 'method': lambda x: x.risk_factor(), 'reverse': lambda x: x}),
+        ('upside', {'label': 'Upside',      'selected': False, 'method': lambda x: x.std_dev_points()*x.games_played(), 'reverse': lambda x: not x}),
+        ('flr',    {'label': 'Floor',       'selected': False, 'method': lambda x: x.floor_points(), 'reverse': lambda x: not x}),
+        ('med',    {'label': 'Median',      'selected': False, 'method': lambda x: x.median_points(), 'reverse': lambda x: not x}),
+        ('cei',    {'label': 'Ceiling',     'selected': False, 'method': lambda x: x.ceiling_points(), 'reverse': lambda x: not x}),
         ])
 
     def get_queryset(self):
@@ -161,7 +167,9 @@ class PlayerList(PListView):
         queryset = queryset.filter(season_points__gt=0)
         position = self.request.GET.get('position', 'all')
         name = self.request.GET.get('name')
-        sort = self.request.GET.get('sort')
+        sort = self.request.GET.get('sort', 'total')
+        min_std = int(self.request.GET.get('min_std', 1))
+        min_mean = int(self.request.GET.get('min_mean', 1))
         reverse = bool(self.request.GET.get('reverse'))
         if position in ('QB', 'WR', 'RB', 'TE', 'K'):
             queryset = queryset.filter(position__contains=position)
@@ -170,25 +178,17 @@ class PlayerList(PListView):
                     Q(first_name__icontains=name) |
                     Q(last_name__icontains=name)
                     )
-        if sort == 'risk':
-            queryset = list(queryset)
-            queryset = filter(lambda x: x.std_dev_points() > 1, queryset)
-            queryset.sort(key=lambda x: x.std_dev_points()/x.mean_points()/x.games_played(), reverse=(reverse))
-        elif sort == 'upside':
-            queryset = list(queryset)
-            queryset = filter(lambda x: x.std_dev_points() > 1, queryset)
-            queryset.sort(key=lambda x: x.std_dev_points()*x.games_played(), reverse=(not reverse))
-        elif sort == 'std':
-            queryset = list(queryset)
-            queryset.sort(key=lambda x: x.std_dev_points(), reverse=(not reverse))
-        elif sort == 'avg':
-            queryset = list(queryset)
-            queryset.sort(key=lambda x: x.mean_points(), reverse=(not reverse))
-        else:
+        if sort == 'total':
             if reverse:
                 queryset = queryset.order_by('season_points')
             else:
                 queryset = queryset.order_by('-season_points')
+        else:
+            queryset = list(queryset)
+            queryset = filter(lambda x: x.std_dev_points() > min_std, queryset)
+            queryset = filter(lambda x: x.mean_points() > min_mean, queryset)
+            sort_method = self.__class__.sort_methods.get(sort)
+            queryset.sort(key=sort_method['method'], reverse=sort_method['reverse'](reverse))
         return queryset
 
     def get_context_data(self, **kwargs):

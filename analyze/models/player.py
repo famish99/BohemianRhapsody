@@ -114,6 +114,22 @@ class Player(models.Model):
             self.get_points()
         return round(numpypy.std(self._points), 2)
 
+    def floor_points(self, **kwargs):
+        """
+        Return score variance
+        """
+        if not self._points:
+            self.get_points()
+        return round(numpypy.min(self._points), 2)
+
+    def ceiling_points(self, **kwargs):
+        """
+        Return score variance
+        """
+        if not self._points:
+            self.get_points()
+        return round(numpypy.max(self._points), 2)
+
     def games_played(self, **kwargs):
         """
         Return number of non-zero games
@@ -126,7 +142,6 @@ class Player(models.Model):
         if not self._points:
             self.get_points()
         return round((self.std_dev_points() / self.mean_points() * 100), 2)
-
 
     @classmethod
     def find_all(cls, **kwargs):

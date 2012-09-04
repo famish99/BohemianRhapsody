@@ -5,12 +5,10 @@ Player info management
 import os
 import pickle
 
-if __name__ == '__main__':
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fantasy.settings")
+from argparse import ArgumentParser
+from utils.query import QueryManager
 
-    from argparse import ArgumentParser
-    from utils.query import QueryManager
-    from analyze.models.player import Player
+if __name__ == '__main__':
 
     parser = ArgumentParser()
     parser.add_argument('-s', '--start', action='store', dest='start', metavar='n',  default=0, help='Index to begin search')
@@ -37,6 +35,10 @@ if __name__ == '__main__':
             'game': str(args.game),
             'league': str(args.league),
             }
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fantasy.settings")
+    from analyze.models.player import Player
+
     if args.find:
         Player.query_manager.set_sleep(int(args.sleep))
         Player.find_all(**kwargs)
