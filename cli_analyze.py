@@ -17,15 +17,20 @@ if __name__ == '__main__':
     parser.add_argument('-d', '--dir', action='store', dest='directory', default='player_data', metavar='DIR', help='Directory to read/write results')
     parser.add_argument('-g', '--game', action='store', dest='game', default='nfl', metavar='ID', help='Game ID to search for players')
     parser.add_argument('-S', '--sleep', action='store', dest='sleep', default=10, metavar='sec', help='Time to wait between queries')
-    parser.add_argument('-E', '--eligible', action='store_true', dest='eligible', default=False,
-            help='Search for eligible players, must use with --league flag, turns --filename into an input flag')
     parser.add_argument('-l', '--league', action='store', dest='league', metavar='ID', help='League ID needed for queries')
+    parser.add_argument('-w', '--week', action='store', dest='week',  metavar='n', help='Statisical week number to query', nargs='*')
+    parser.add_argument('-F', '--find', action='store_true', dest='find', default=False,
+            help='Use with --game/--start/--end/--filename/--dir/--eligible flag, run player ID search on Yahoo DB, --eligible is optional and will NEGATE eligibility check before adding')
     parser.add_argument('--raw', action='store_true', dest='raw', default=False,
             help='Grab player background data, turns --filename into an input flag')
-    parser.add_argument('-F', '--find', action='store_true', dest='find', default=False, help='Run player ID search on Yahoo DB')
-    parser.add_argument('-L', '--load', action='store_true', dest='load', default=False, help='Load player data from files into db, use --directory to locate files')
-    parser.add_argument('--stats', action='store_true', dest='stats', default=False, help='Load stat data into db from yahoo')
-    parser.add_argument('-w', '--week', action='store', dest='week',  metavar='n', help='Statisical week number to query', nargs='*')
+    parser.add_argument('-E', '--eligible', action='store_true', dest='eligible', default=False,
+            help='Use with --filename flag, search for eligible players, turns --filename into an input flag')
+    parser.add_argument('--loadplayers', action='store_true', dest='load_players', default=False,
+            help='<Deprecated as search will automatically do this> Load player data from files into db, use --directory to locate files')
+    parser.add_argument('--loadleague', action='store_true', dest='load_league', default=False,
+            help='Use with --league flag, load the league id into the db from yahoo')
+    parser.add_argument('--stats', action='store_true', dest='stats', default=False,
+            help='Use with --week flag, load stat data into db from yahoo')
     args = parser.parse_args()
     kwargs = {
             'start': int(args.start),
@@ -38,9 +43,12 @@ if __name__ == '__main__':
 
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fantasy.settings")
     from analyze.models.player import Player
+    from analyze.models.league import League
+    from analyze.models.team import Team
 
     if args.find:
         Player.query_manager.set_sleep(int(args.sleep))
+        kwargs['eligible'] = args.eligible
         Player.find_all(**kwargs)
     elif args.raw:
         import re
@@ -75,7 +83,7 @@ if __name__ == '__main__':
                     else:
                         print '%s: %s: False' % (player_id, pos)
                         os.unlink(filename)
-    elif args.load:
+    elif args.load_players:
         files = os.listdir(args.directory)
         for player_id in files:
             print player_id
@@ -86,6 +94,11 @@ if __name__ == '__main__':
             p.load_db()
             p.save()
             print '%s %s' % (p.first_name, p.last_name)
+    elif args.load_league:
+        League.query_manager.set_sleep(int(args.sleep))
+        League.load_league(args.league)
+        Team.query_manager.set_sleep(int(args.sleep))
+        Team.load_teams(args.league)
     elif args.stats:
         Player.query_manager.set_sleep(int(args.sleep))
         for week in args.week:

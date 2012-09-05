@@ -151,7 +151,7 @@ class Player(models.Model):
         """
 
         start = kwargs.get('start', 0)
-        end = kwargs.get('end', 25000)
+        end = kwargs.get('end', 26000)
         filename = kwargs.get('filename', 'player.log')
         game = kwargs.get('game', 'nfl')
         with open(filename, 'w') as output:
@@ -165,8 +165,18 @@ class Player(models.Model):
                 if results:
                     results = results.get('player')
                     print '%s: True' % player_id
-                    output.write('%s\n' % player_id)
-                    cls.store_raw_info(player_id, results, **kwargs)
+                    new_player = Player()
+                    new_player._raw_info = results
+                    if new_player.eligible_player(**kwargs) or kwargs.get('eligible', False):
+                        output.write('%s\n' % player_id)
+                        cls.store_raw_info(player_id, results, **kwargs)
+                        if not cls.objects.filter(player_key=player_id).exists():
+                            new_player.load_db()
+                            new_player.save()
+                        else:
+                            print "Player %s exists in database" % player_id
+                    else:
+                        print "Player %s ineligible for league" % player_id
                 else:
                     print '%s: False' % player_id
                 output.flush()

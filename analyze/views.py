@@ -162,7 +162,7 @@ class PlayerList(PListView):
         ])
 
     def get_queryset(self):
-        year_key = self.__class__.year_keys.get(self.kwargs.get('year'), '257')
+        year_key = self.__class__.year_keys.get(self.kwargs.get('year'))
         queryset = Player.objects.filter(player_key__contains=year_key)
         queryset = queryset.filter(season_points__gt=0)
         position = self.request.GET.get('position', 'all')
