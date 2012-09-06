@@ -5,6 +5,7 @@ from utils.query import QueryManager
 from django.db import models
 from analyze.models.league import League
 
+
 class Team(models.Model):
     """
     Fantasy team model
@@ -13,6 +14,10 @@ class Team(models.Model):
     name = models.CharField(max_length=32)
     manager_name = models.CharField(max_length=32)
     league = models.ForeignKey(League, related_name='teams')
+    wins = models.SmallIntegerField(default=0)
+    losses = models.SmallIntegerField(default=0)
+    ties = models.SmallIntegerField(default=0)
+    rank = models.SmallIntegerField(default=0)
 
     query_manager = QueryManager()
 

@@ -3,6 +3,14 @@ League module
 """
 from utils.query import QueryManager
 from django.db import models
+from django.utils.datastructures import SortedDict
+
+
+YEAR_KEYS = SortedDict([
+    ('257', '2011'),
+    ('273', '2012'),
+    ])
+
 
 class League(models.Model):
     """
@@ -19,6 +27,13 @@ class League(models.Model):
 
     def __unicode__(self):
         return '%s: %s' % (self.league_key, self.name)
+
+    def year(self):
+        """
+        Return the year of the league
+        """
+        league_pre, league_id = self.league_key.split('.l.')
+        return YEAR_KEYS.get(league_pre)
 
     @classmethod
     def load_league(cls, league_id, **kwargs):

@@ -8,10 +8,12 @@ import analyze.views
 
 urlpatterns = patterns('',
     # Examples:
-    url(r'^$', analyze.views.HomeView.as_view()),
-    url(r'^(?P<year>\d+)/$', analyze.views.PlayerList.as_view()),
-    url(r'^(?P<year>\d+)/players/$', analyze.views.PlayerList.as_view()),
-    url(r'^(?P<year>\d+)/player/(?P<pk>\d+)/$', analyze.views.PlayerDetail.as_view()),
+    url(r'^$', analyze.views.LeagueList.as_view()),
+    url(r'^(?P<league_key>[\w.]+)/$', analyze.views.PlayerList.as_view()),
+    url(r'^(?P<league_key>[\w.]+)/players/$', analyze.views.PlayerList.as_view()),
+    url(r'^(?P<league_key>[\w.]+)/player/(?P<pk>\d+)/$', analyze.views.PlayerDetail.as_view()),
+    url(r'^(?P<league_key>[\w.]+)/teams/$', analyze.views.TeamList.as_view()),
+    url(r'^(?P<league_key>[\w.]+)/team/(?P<pk>\d+)/$', analyze.views.TeamDetail.as_view()),
     # url(r'^fantasy/', include('fantasy.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

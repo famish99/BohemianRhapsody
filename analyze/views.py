@@ -8,6 +8,8 @@ from django.utils.datastructures import SortedDict
 from django.db.models import Q
 from analyze.models.stats import STATS
 from analyze.models.player import Player
+from analyze.models.league import League, YEAR_KEYS
+from analyze.models.team import Team
 from urllib import urlencode
 import copy
 import numpypy
@@ -20,14 +22,11 @@ def template_factory(base_class, name):
         """
         nav_list = SortedDict([
             #('home', {'name': 'Home', 'ref': '/', 'active': False}),
+            ('teams', {'name': 'Fantasy Teams', 'ref': 'teams/', 'active': False}),
             ('players', {'name': 'NFL Players', 'ref': 'players/', 'active': False}),
-            #('managers', {'name': 'Fantasy Managers', 'ref': '#', 'active': False}),
             ])
 
-        year_keys = SortedDict([
-            ('2011', '257'),
-            ('2012', '273'),
-            ])
+        year_keys = YEAR_KEYS
 
         script_list = []
 
@@ -39,14 +38,14 @@ def template_factory(base_class, name):
             link_list = []
             for key, value in self.__class__.nav_list.items():
                 add_value = value.copy()
-                add_value['ref'] = "/%s/%s" % (self.kwargs.get('year'), value['ref'])
+                add_value['ref'] = "/%s/%s" % (self.kwargs.get('league_key'), value['ref'])
                 if key == name:
                     add_value['active'] = True
                 else:
                     add_value['active'] = False
                 link_list.append(add_value)
             context['nav_list'] = link_list
-            context['year'] = self.kwargs.get('year')
+            context['league_key'] = self.kwargs.get('league_key')
             context['page_title'] = self.__class__.page_title
             context['script_list'] = self.__class__.script_list
             return context
@@ -55,8 +54,11 @@ def template_factory(base_class, name):
 
 
 HTemplateView = template_factory(TemplateView, 'home')
+HListView = template_factory(ListView, 'home')
 PListView = template_factory(ListView, 'players')
 PDetailView = template_factory(DetailView, 'players')
+TListView = template_factory(ListView, 'teams')
+TDetailView = template_factory(DetailView, 'teams')
 
 class HomeView(HTemplateView):
     """
@@ -70,6 +72,46 @@ class HomeView(HTemplateView):
         context = super(HomeView, self).get_context_data(**kwargs)
         context['year_list'] = self.__class__.year_keys.keys()
         return context
+
+
+class LeagueList(HListView):
+    """
+    View class for the league list
+    """
+    template_name = 'league_list.html'
+    page_title = 'League Selection'
+    model = League
+
+    def get_context_data(self, **kwargs):
+        context = super(LeagueList, self).get_context_data(**kwargs)
+        context['nav_list'] = None
+        return context
+
+
+class TeamList(TListView):
+    """
+    List teams in the league
+    """
+    template_name = 'team_list.html'
+    page_title = 'Teams'
+
+    def get_queryset(self, **kwargs):
+        queryset = Team.objects.filter(league__league_key=self.kwargs.get('league_key'))
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(TeamList, self).get_context_data(**kwargs)
+        context['league'] = League.objects.get(league_key=self.kwargs.get('league_key'))
+        return context
+
+
+class TeamDetail(TDetailView):
+    """
+    View class for individual team detail
+    """
+    template_name = 'player_detail.html'
+    page_title = 'Player Detail'
+    model = Player
 
 
 class PlayerDetail(PDetailView):
@@ -123,6 +165,7 @@ class PlayerDetail(PDetailView):
                 ("Games Played", player.games_played()),
                 ("Risk Factor", '%.2f%%' % player.risk_factor()),
                 ]
+        context['page_title'] = '%s %s Detail' % (player.first_name, player.last_name)
         return context
 
 
@@ -161,8 +204,16 @@ class PlayerList(PListView):
         ('cei',    {'label': 'Ceiling',     'selected': False, 'method': lambda x: x.ceiling_points(), 'reverse': lambda x: not x}),
         ])
 
+    def get_year_key(self):
+        """
+        Return the league key prefix
+        """
+        league_key = self.kwargs.get('league_key')
+        league_prefix, league_id = league_key.split('.l.')
+        return league_prefix
+
     def get_queryset(self):
-        year_key = self.__class__.year_keys.get(self.kwargs.get('year'))
+        year_key = self.get_year_key()
         queryset = Player.objects.filter(player_key__contains=year_key)
         queryset = queryset.filter(season_points__gt=0)
         position = self.request.GET.get('position', 'all')

@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="span7 offset1">
+<div class="row">
+    <h2>Tracked Leagues</h2>
+</div>
+{% for league in object_list %}
+<div class="row">
+    <a href="/{{ league.league_key }}/teams/">{{ league.year }} {{ league.name }}</a>
+</div>
+{% endfor %}
+{% endblock %}
+
