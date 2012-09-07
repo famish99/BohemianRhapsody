@@ -10,9 +10,9 @@ from analyze.models.stats import STATS
 from analyze.models.player import Player
 from analyze.models.league import League, YEAR_KEYS
 from analyze.models.team import Team
+from utils.mathutils import MathUtils
 from urllib import urlencode
 import copy
-import numpypy
 
 
 def template_factory(base_class, name):
@@ -149,8 +149,8 @@ class PlayerDetail(PDetailView):
         avg_stats = ['Avg']
         for key, value in columns:
             avg_str = "%.1f &plusmn; %.1f" % (
-                    numpypy.mean(column_lists[key]),
-                    numpypy.std(column_lists[key]),
+                    MathUtils.mean(column_lists[key]),
+                    MathUtils.std(column_lists[key]),
                     )
             avg_stats.append(avg_str)
         avg_stats.append(player.mean_points())
@@ -158,7 +158,8 @@ class PlayerDetail(PDetailView):
         points = player.get_points()
         context['stat_rows'] = [
                 ("Total Points", player._season_points()),
-                ("Mean", player.mean_points()),
+                ("Geometric Mean", player.gmean_points()),
+                ("Arithmetic Mean", player.mean_points()),
                 ("Std Dev", player.std_dev_points()),
                 ("Median", player.median_points()),
                 ("Floor", player.floor_points()),

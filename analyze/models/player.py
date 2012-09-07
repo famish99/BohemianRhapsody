@@ -2,10 +2,10 @@
 Player info management
 """
 from utils.query import QueryManager
+from utils.mathutils import MathUtils
 from django.db import models
 import os
 import pickle
-import numpypy
 
 class Player(models.Model):
     """
@@ -84,7 +84,7 @@ class Player(models.Model):
         """
         if not self._points:
             self.get_points()
-        return numpypy.sum(self._points)
+        return MathUtils.sum(self._points)
 
     def mean_points(self, **kwargs):
         """
@@ -92,7 +92,15 @@ class Player(models.Model):
         """
         if not self._points:
             self.get_points()
-        return round(numpypy.mean(self._points), 2)
+        return MathUtils.mean(self._points)
+
+    def gmean_points(self, **kwargs):
+        """
+        Return the mean score
+        """
+        if not self._points:
+            self.get_points()
+        return MathUtils.gmean(self._points)
 
     def median_points(self, **kwargs):
         """
@@ -100,11 +108,7 @@ class Player(models.Model):
         """
         if not self._points:
             self.get_points()
-        if len(self._points) % 2:
-            return sorted(self._points)[len(self._points)/2]
-        else:
-            mid = len(self._points) / 2
-            return numpypy.mean(sorted(self._points)[(mid - 1):(mid + 1)])
+        return MathUtils.median(self._points)
 
     def std_dev_points(self, **kwargs):
         """
@@ -112,7 +116,7 @@ class Player(models.Model):
         """
         if not self._points:
             self.get_points()
-        return round(numpypy.std(self._points), 2)
+        return MathUtils.std(self._points)
 
     def floor_points(self, **kwargs):
         """
@@ -120,7 +124,7 @@ class Player(models.Model):
         """
         if not self._points:
             self.get_points()
-        return round(numpypy.min(self._points), 2)
+        return MathUtils.min(self._points)
 
     def ceiling_points(self, **kwargs):
         """
@@ -128,7 +132,7 @@ class Player(models.Model):
         """
         if not self._points:
             self.get_points()
-        return round(numpypy.max(self._points), 2)
+        return MathUtils.max(self._points)
 
     def games_played(self, **kwargs):
         """
@@ -197,7 +201,6 @@ class Player(models.Model):
         Get stat data for the player
         """
         import analyze.models.stats as stats
-        #player_list = [p.player_key for p in cls.objects.all()]
         player_list = []
         for p in cls.objects.all():
             if not p.stats.filter(week_num=week).exists():
