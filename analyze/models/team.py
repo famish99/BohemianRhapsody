@@ -26,9 +26,16 @@ class Team(models.Model):
         """
         Load teams from yahoo into db
         """
+        print 'Loading teams'
         query_str = "select * from fantasysports.teams where league_key='%s'" % league_id
-        results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str, retry=False)).get('query').get('results')
-        teams = results.get('team')
+        teams = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str, retry=False)).get('query').get('results').get('team')
+        query_str = "select standings.teams.team.team_key, standings.teams.team.team_standings from fantasysports.leagues.standings where league_key='%s'" % (league_id)
+        results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str, retry=False)).get('query').get('results').get('league')
+        standings = { 
+                item.get('standings').get('teams').get('team').get('team_key'):
+                item.get('standings').get('teams').get('team').get('team_standings')
+                for item in results
+                }
         league = League.objects.get(league_key=league_id)
         for raw_team in teams:
             team_key = raw_team.get('team_key')
@@ -48,6 +55,11 @@ class Team(models.Model):
             team.name = raw_team.get('name')
             team.manager_name = name
             team.league = league
+            outcome_totals = standings.get(team_key).get('outcome_totals')
+            team.wins   = int(outcome_totals.get('wins'))
+            team.losses = int(outcome_totals.get('losses'))
+            team.ties   = int(outcome_totals.get('ties'))
+            team.rank   = int(standings.get(team_key).get('rank'))
             team.save()
 
     class Meta:

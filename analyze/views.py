@@ -97,6 +97,7 @@ class TeamList(TListView):
 
     def get_queryset(self, **kwargs):
         queryset = Team.objects.filter(league__league_key=self.kwargs.get('league_key'))
+        queryset = queryset.order_by('rank')
         return queryset
 
     def get_context_data(self, **kwargs):
