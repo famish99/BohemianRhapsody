@@ -134,6 +134,14 @@ class Player(models.Model):
             self.get_points()
         return MathUtils.max(self._points)
 
+    def normalize_points(self, **kwargs):
+        """
+        Returns a list of points normalized to 1.0
+        """
+        if not self._points:
+            self.get_points()
+        return MathUtils.normalize(self._points, **kwargs)
+
     def games_played(self, **kwargs):
         """
         Return number of non-zero games
