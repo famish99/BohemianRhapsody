@@ -73,7 +73,7 @@ class MathUtils:
         Normalize list elements
         """
         list_norm = 1.0/numpypy.max(input_list, **kwargs)
-        if kwargs.get('round', True):
+        if kwargs.pop('round', True):
             output_list = map(lambda x: round(x*list_norm, cls.default_round), input_list)
         else:
             output_list = map(lambda x: x*list_norm, input_list)

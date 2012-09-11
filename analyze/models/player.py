@@ -51,7 +51,12 @@ class Player(models.Model):
             position = join_str.join(position)
         self.position = position
         self.first_name = self._raw_info.get('name').get('first')
+        default_last_name = ''
+        if position == 'DEF':
+            default_last_name = 'Defense'
         self.last_name  = self._raw_info.get('name').get('last')
+        if not self.last_name:
+            self.last_name = default_last_name
         self.team_key   = self._raw_info.get('editorial_team_key')
         self.team_name  = self._raw_info.get('editorial_team_full_name')
         self.bye_week   = self._raw_info.get('bye_weeks').get('week')
@@ -156,6 +161,26 @@ class Player(models.Model):
         return round((self.std_dev_points() / self.mean_points() * 100), 2)
 
     @classmethod
+    def get_player(cls, player_id, **kwargs):
+        """
+        Proxy to get_or_create that will handle loading in player data if
+        creation is needed
+        """
+        player, created = cls.objects.get_or_create(player_key=player_id)
+        if created:
+            try:
+                query_str = "select * from fantasysports.players where player_key='%s'" % player_id
+                results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str, retry=False)).get('query').get('results').get('player')
+                player._raw_info = results
+                player.load_db()
+                player.save()
+                print "%s created" % player_id
+            except KeyboardInterrupt:
+                player.delete()
+                raise KeyboardInterrupt
+        return player
+
+    @classmethod
     def find_all(cls, **kwargs):
         """
         Since Yahoo is a bitch, go scrub the db and find which player ids
@@ -209,9 +234,12 @@ class Player(models.Model):
         Get stat data for the player
         """
         import analyze.models.stats as stats
+        force = kwargs.get('force', False)
         player_list = []
-        for p in cls.objects.all():
-            if not p.stats.filter(week_num=week).exists():
+        prefix, league = league_key.split('.l.', 1)
+        p_list = cls.objects.filter(player_key__contains=prefix)
+        for p in p_list:
+            if force or not p.stats.filter(week_num=week).exists():
                 player_list.append(p.player_key)
             else:
                 print 'Data exists for %s week %d' % (p.player_key, week)
@@ -221,9 +249,8 @@ class Player(models.Model):
             player = cls.objects.get(player_key=p_key)
             print "%s week %d" % (player, week)
             try:
-                p_stats = stats.PlayerStats()
-                p_stats.player = player
-                p_stats.week_num = week
+                player.stats.filter(week_num=week)
+                p_stats, created = player.stats.get_or_create(week_num=week)
                 p_stats.load_stats(result)
                 p_stats.save()
                 player.season_points = player._season_points()

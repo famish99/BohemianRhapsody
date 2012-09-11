@@ -32,7 +32,7 @@ class League(models.Model):
         """
         Return the year of the league
         """
-        league_pre, league_id = self.league_key.split('.l.')
+        league_pre, league_id = self.league_key.split('.l.', 1)
         return YEAR_KEYS.get(league_pre)
 
     @classmethod
@@ -46,7 +46,7 @@ class League(models.Model):
         else:
             print 'Creating league %s' % league_id
         query_str = "select * from fantasysports.leagues where league_key='%s'" % league_id
-        results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str, retry=False)).get('query').get('results').get('league')
+        results = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str)).get('query').get('results').get('league')
         league.league_key = results.get('league_key')
         league.name = results.get('name')
         league.scoring_type = results.get('scoring_type')

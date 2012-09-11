@@ -1,9 +1,11 @@
 """
 Team management
 """
+from analyze.models.league import League
+from analyze.models.player import Player
 from utils.query import QueryManager
 from django.db import models
-from analyze.models.league import League
+from django.utils.datastructures import SortedDict
 
 
 class Team(models.Model):
@@ -18,15 +20,20 @@ class Team(models.Model):
     losses = models.SmallIntegerField(default=0)
     ties = models.SmallIntegerField(default=0)
     rank = models.SmallIntegerField(default=0)
+    players = models.ManyToManyField(Player, through='Roster')
 
     query_manager = QueryManager()
+
+    def __unicode__(self):
+        return '%s: %s' % (self.team_key, self.name)
+
 
     @classmethod
     def load_teams(cls, league_id):
         """
         Load teams from yahoo into db
         """
-        print 'Loading teams'
+        print 'Loading teams...'
         query_str = "select * from fantasysports.teams where league_key='%s'" % league_id
         teams = QueryManager.decode_query(cls.query_manager.run_yql_query(query_str, retry=False)).get('query').get('results').get('team')
         query_str = "select standings.teams.team.team_key, standings.teams.team.team_standings from fantasysports.leagues.standings where league_key='%s'" % (league_id)
@@ -66,3 +73,35 @@ class Team(models.Model):
         """ Metadata class for Team """
         app_label = 'analyze'
 
+
+class Roster(models.Model):
+    """
+    Player membership model
+    """
+    team = models.ForeignKey(Team)
+    player = models.ForeignKey(Player)
+    week = models.SmallIntegerField()
+    position = models.CharField(max_length=2)
+
+    query_manager = QueryManager()
+
+    @classmethod
+    def load_rosters(cls, league_id, week):
+        """
+        Load the rosters for the week
+        """
+        print 'Loading rosters for league %s' % league_id
+        teams = Team.objects.filter(league__league_key=league_id)
+        team_list = SortedDict([(team.team_key, team) for team in teams])
+        query_str = "select team_key, roster.players.player.player_key, roster.players.player.selected_position.position from fantasysports.teams.roster where team_key in (value) and week='%s'" % week
+        for result in cls.query_manager.batch_query(query_str, team_list.keys()):
+            team_key = result.get('team_key')
+            team = team_list.get(team_key)
+            print 'Loading team %s week %s' % (team.name, str(week))
+            player_list = result.get('roster').get('players').get('player')
+            for player in player_list:
+                print Player.get_player(player.get('player_key'))
+
+    class Meta:
+        """ Metadata class for Roster """
+        app_label = 'analyze'

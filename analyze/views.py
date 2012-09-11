@@ -1,16 +1,16 @@
 """
 View Module
 """
-from django.views.generic import DetailView
-from django.views.generic import ListView
-from django.views.generic.base import TemplateView
-from django.utils.datastructures import SortedDict
-from django.db.models import Q
 from analyze.models.stats import STATS
 from analyze.models.player import Player
 from analyze.models.league import League, YEAR_KEYS
 from analyze.models.team import Team
 from utils.mathutils import MathUtils
+from django.views.generic import DetailView
+from django.views.generic import ListView
+from django.views.generic.base import TemplateView
+from django.utils.datastructures import SortedDict
+from django.db.models import Q
 from urllib import urlencode
 import copy
 
@@ -211,7 +211,7 @@ class PlayerList(PListView):
         Return the league key prefix
         """
         league_key = self.kwargs.get('league_key')
-        league_prefix, league_id = league_key.split('.l.')
+        league_prefix, league_id = league_key.split('.l.', 1)
         return league_prefix
 
     def get_queryset(self):

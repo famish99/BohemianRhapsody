@@ -1,11 +1,11 @@
 """
 Statistical data models 
 """
+from analyze.models.player import Player
 from utils.query import QueryManager
 from django.db import models
-from picklefield.fields import PickledObjectField
-from analyze.models.player import Player
 from django.utils.datastructures import SortedDict
+from picklefield.fields import PickledObjectField
 
 
 def calc_pts_allowed(pts):
@@ -48,11 +48,19 @@ STATS = SortedDict([
         ('31', ('Pts Allowed', lambda x: calc_pts_allowed(x) )),
         ('32', ('Sack',        lambda x: x * 1 )),
         ('33', ('INT',         lambda x: x * 2 )),
+        ('34', ('Fum Rec',     lambda x: x * 2 )),
         ('35', ('TD',          lambda x: x * 6 )),
         ('36', ('Safety',      lambda x: x * 2 )),
         ('37', ('Blk Kick',    lambda x: x * 2 )),
         ('49', ('Ret TD',      lambda x: x * 6 )),
         ('57', ('',            lambda x: 0 )),
+        ('50', ('',            lambda x: 0 )),
+        ('51', ('',            lambda x: 0 )),
+        ('52', ('',            lambda x: 0 )),
+        ('53', ('',            lambda x: 0 )),
+        ('54', ('',            lambda x: 0 )),
+        ('55', ('',            lambda x: 0 )),
+        ('56', ('',            lambda x: 0 )),
         ])
 
 

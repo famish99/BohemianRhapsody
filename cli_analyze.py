@@ -29,8 +29,10 @@ if __name__ == '__main__':
             help='<Deprecated as search will automatically do this> Load player data from files into db, use --directory to locate files')
     parser.add_argument('--loadleague', action='store_true', dest='load_league', default=False,
             help='Use with --league flag, load the league id into the db from yahoo')
+    parser.add_argument('--loadroster', action='store_true', dest='load_roster', default=False,
+            help='Use with --league/--week flag, load the team rosters for the league/week into the db from yahoo')
     parser.add_argument('--stats', action='store_true', dest='stats', default=False,
-            help='Use with --week flag, load stat data into db from yahoo')
+            help='Use with --league/--week flag, load stat data into db from yahoo')
     args = parser.parse_args()
     kwargs = {
             'start': int(args.start),
@@ -44,7 +46,7 @@ if __name__ == '__main__':
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "fantasy.settings")
     from analyze.models.player import Player
     from analyze.models.league import League
-    from analyze.models.team import Team
+    from analyze.models.team import Team, Roster
 
     if args.find:
         Player.query_manager.set_sleep(int(args.sleep))
@@ -99,6 +101,10 @@ if __name__ == '__main__':
         League.load_league(args.league)
         Team.query_manager.set_sleep(int(args.sleep))
         Team.load_teams(args.league)
+    elif args.load_roster:
+        Roster.query_manager.set_sleep(int(args.sleep))
+        for week in args.week:
+            Roster.load_rosters(args.league, int(week))
     elif args.stats:
         Player.query_manager.set_sleep(int(args.sleep))
         for week in args.week:
