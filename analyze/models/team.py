@@ -81,7 +81,7 @@ class Roster(models.Model):
     team = models.ForeignKey(Team)
     player = models.ForeignKey(Player)
     week = models.SmallIntegerField()
-    position = models.CharField(max_length=2)
+    position = models.CharField(max_length=4)
 
     query_manager = QueryManager()
 

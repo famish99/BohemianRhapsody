@@ -143,9 +143,10 @@ class Player(models.Model):
         """
         Returns a list of points normalized to 1.0
         """
-        if not self._points:
-            self.get_points()
-        return MathUtils.normalize(self._points, **kwargs)
+        self.get_points(raw=True)
+        result = MathUtils.normalize(self._points, **kwargs)
+        self.get_points()
+        return result
 
     def games_played(self, **kwargs):
         """
@@ -237,12 +238,13 @@ class Player(models.Model):
         force = kwargs.get('force', False)
         player_list = []
         prefix, league = league_key.split('.l.', 1)
-        p_list = cls.objects.filter(player_key__contains=prefix)
+        p_list = cls.objects.filter(player_key__contains='%s.p.' % prefix)
         for p in p_list:
             if force or not p.stats.filter(week_num=week).exists():
                 player_list.append(p.player_key)
+                print 'Adding %s to load queue' % p
             else:
-                print 'Data exists for %s week %d' % (p.player_key, week)
+                print 'Data exists for %s week %d' % (p, week)
         query_str = "select player_key, player_stats from fantasysports.players.stats where league_key='%s' and player_key in (value) and stats_type='week' and stats_week='%s'" % (league_key, str(week))
         for result in cls.query_manager.batch_query(query_str, player_list):
             p_key = result.get('player_key')

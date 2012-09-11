@@ -72,9 +72,10 @@ class MathUtils:
         """
         Normalize list elements
         """
-        list_norm = 1.0/numpypy.max(input_list, **kwargs)
+        list_min = numpypy.min(input_list, **kwargs)
+        list_norm = 1.0/(numpypy.max(input_list, **kwargs) - list_min)
         if kwargs.pop('round', True):
-            output_list = map(lambda x: round(x*list_norm, cls.default_round), input_list)
+            output_list = map(lambda x: round((x-list_min)*list_norm, cls.default_round), input_list)
         else:
-            output_list = map(lambda x: x*list_norm, input_list)
+            output_list = map(lambda x: (x-list_min)*list_norm, input_list)
         return output_list

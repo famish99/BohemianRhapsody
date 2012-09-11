@@ -158,7 +158,7 @@ class PlayerDetail(PDetailView):
         points = player.get_points()
         context['stat_rows'] = [
                 ("Total Points", player._season_points()),
-                ("Geometric Mean", player.gmean_points()),
+                #("Geometric Mean", player.gmean_points()),
                 ("Arithmetic Mean", player.mean_points()),
                 ("Std Dev", player.std_dev_points()),
                 ("Median", player.median_points()),
@@ -192,6 +192,7 @@ class PlayerList(PListView):
         ('RB' , {'label': 'RB' , 'selected': False}),
         ('TE' , {'label': 'TE' , 'selected': False}),
         ('K'  , {'label': 'K'  , 'selected': False}),
+        ('DEF', {'label': 'DEF', 'selected': False}),
         ])
 
     sort_methods = SortedDict([
@@ -224,7 +225,7 @@ class PlayerList(PListView):
         min_std = int(self.request.GET.get('min_std', 1))
         min_mean = int(self.request.GET.get('min_mean', 1))
         reverse = bool(self.request.GET.get('reverse'))
-        if position in ('QB', 'WR', 'RB', 'TE', 'K'):
+        if position in ('QB', 'WR', 'RB', 'TE', 'K', 'DEF'):
             queryset = queryset.filter(position__contains=position)
         if name:
             queryset = queryset.filter(
