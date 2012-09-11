@@ -85,12 +85,16 @@ class Roster(models.Model):
 
     query_manager = QueryManager()
 
+    def __unicode__(self):
+        return '%s: %s week %s %s' % (self.team.__unicode__(), self.player.__unicode__(), str(self.week), self.position)
+
     @classmethod
     def load_rosters(cls, league_id, week):
         """
         Load the rosters for the week
         """
-        print 'Loading rosters for league %s' % league_id
+        print 'Loading rosters for league %s week %s' % (league_id, str(week))
+        week_list = cls.objects.filter(week=week)
         teams = Team.objects.filter(league__league_key=league_id)
         team_list = SortedDict([(team.team_key, team) for team in teams])
         query_str = "select team_key, roster.players.player.player_key, roster.players.player.selected_position.position from fantasysports.teams.roster where team_key in (value) and week='%s'" % week
@@ -98,9 +102,15 @@ class Roster(models.Model):
             team_key = result.get('team_key')
             team = team_list.get(team_key)
             print 'Loading team %s week %s' % (team.name, str(week))
+            team_rosters = week_list.filter(team=team)
+            team_rosters.delete()
             player_list = result.get('roster').get('players').get('player')
             for player in player_list:
-                print Player.get_player(player.get('player_key'))
+                player_obj = Player.get_player(player.get('player_key'))
+                position = player.get('selected_position').get('position')
+                roster_item = cls.objects.create(team=team, week=week, player=player_obj, position=position)
+                roster_item.save()
+                print '%s: %s' % (player_obj, position)
 
     class Meta:
         """ Metadata class for Roster """
