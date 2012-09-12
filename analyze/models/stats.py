@@ -53,7 +53,6 @@ STATS = SortedDict([
         ('36', ('Safety',      lambda x: x * 2 )),
         ('37', ('Blk Kick',    lambda x: x * 2 )),
         ('49', ('Ret TD',      lambda x: x * 6 )),
-        ('57', ('',            lambda x: 0 )),
         ('50', ('',            lambda x: 0 )),
         ('51', ('',            lambda x: 0 )),
         ('52', ('',            lambda x: 0 )),
@@ -61,6 +60,7 @@ STATS = SortedDict([
         ('54', ('',            lambda x: 0 )),
         ('55', ('',            lambda x: 0 )),
         ('56', ('',            lambda x: 0 )),
+        ('57', ('',            lambda x: 0 )),
         ])
 
 

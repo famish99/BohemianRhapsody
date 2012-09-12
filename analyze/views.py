@@ -1,7 +1,7 @@
 """
 View Module
 """
-from analyze.models.stats import STATS
+from analyze.models.stats import STATS, PlayerStats
 from analyze.models.player import Player
 from analyze.models.league import League, YEAR_KEYS
 from analyze.models.team import Team
@@ -110,9 +110,56 @@ class TeamDetail(TDetailView):
     """
     View class for individual team detail
     """
-    template_name = 'player_detail.html'
-    page_title = 'Player Detail'
-    model = Player
+    template_name = 'team_detail.html'
+    page_title = 'Team Detail'
+    model = Team
+
+    position_list = [
+            'QB',
+            'WR',
+            'WR',
+            'WR',
+            'RB',
+            'RB',
+            'TE',
+            'K',
+            'DEF',
+            'BN',
+            'BN',
+            'BN',
+            'BN',
+            'BN',
+            'BN',
+            ]
+
+    unique_list = [
+            'QB',
+            'WR',
+            'RB',
+            'TE',
+            'K',
+            'DEF',
+            'BN',
+            ]
+
+    def get_context_data(self, **kwargs):
+        context = super(TeamDetail, self).get_context_data(**kwargs)
+        team = context['object']
+        weeks = range(1, League.objects.get(league_key=self.kwargs.get('league_key')).end_week + 1)
+        context['stat_headers'] = ['Week #'] + self.__class__.position_list
+        context['stat_list'] = []
+        for week in weeks:
+            lineup = team.players.filter(roster__week=week)
+            player_list = [ player
+                    for position in self.__class__.unique_list
+                    for player in team.players.filter(Q(roster__position=position), Q(roster__week=week))
+                    ]
+            stat_week = [ {'week': week} ] + [ {'name': '%s %s' % (player.first_name, player.last_name), } for player in player_list ]
+            lower_stat = [ {'points': "0"} ] + [ {'points': '%s' % str(player.stats.get(week_num=week).total_points()), } for player in player_list]
+            context['stat_list'].append(stat_week)
+            context['stat_list'].append(lower_stat)
+
+        return context
 
 
 class PlayerDetail(PDetailView):
@@ -127,7 +174,7 @@ class PlayerDetail(PDetailView):
         context = super(PlayerDetail, self).get_context_data(**kwargs)
         player = context['object']
         stat_list = player.stats.all()
-        stat_keys = filter(lambda x: x not in ['57'], stat_list[0].stat_data.keys())
+        stat_keys = filter(lambda x: x not in ['50', '51', '52', '53', '54', '55', '56', '57'], stat_list[0].stat_data.keys())
         columns = filter(lambda x: x[0] in stat_keys, STATS.items())
         stat_headers = [ stat_item[1][0] for stat_item in columns ]
         stat_headers.insert(0, 'Week #')
@@ -158,7 +205,7 @@ class PlayerDetail(PDetailView):
         points = player.get_points()
         context['stat_rows'] = [
                 ("Total Points", player._season_points()),
-                #("Geometric Mean", player.gmean_points()),
+                ("Geometric Mean", player.gmean_points()),
                 ("Arithmetic Mean", player.mean_points()),
                 ("Std Dev", player.std_dev_points()),
                 ("Median", player.median_points()),

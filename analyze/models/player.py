@@ -105,7 +105,8 @@ class Player(models.Model):
         """
         if not self._points:
             self.get_points()
-        return MathUtils.gmean(self._points)
+        pts = filter(lambda x: x != 0, self.normalize_points())
+        return MathUtils.gmean(pts)
 
     def median_points(self, **kwargs):
         """
@@ -143,9 +144,9 @@ class Player(models.Model):
         """
         Returns a list of points normalized to 1.0
         """
-        self.get_points(raw=True)
+        if not self._points:
+            self.get_points()
         result = MathUtils.normalize(self._points, **kwargs)
-        self.get_points()
         return result
 
     def games_played(self, **kwargs):

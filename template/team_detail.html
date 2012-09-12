@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="span12">
+    <div class="page-header">
+        <h1>{{ object.name }} <small>{{ object.manager_name }}</small></h1>
+    </div>
+    <legend>Weekly Stats</legend>
+    <div class="span9">
+        <table class="table table-condensed table-bordered table-striped">
+            <tr>
+                {% for header in stat_headers %}
+                <th>{{ header }}</th>
+                {% endfor %}
+            </tr>
+            {% for stat in stat_list %}
+            <tr>
+                {% autoescape off %}
+                {% for item in stat %}
+                {% if item.week %}<td><strong>{{ item.week }}</strong></td>{% endif %}
+                {% if item.name %}<td><small>{{ item.name }}</small></td>{% endif %}
+                {% if item.points %}<td>{{ item.points }}</td>{% endif %}
+                {% endfor %}
+                {% endautoescape %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    <legend>Statistical Analysis</legend>
+    <div class="span3">
+        <table class="table table-condensed">
+            <tr>
+                <th>Stat</th>
+                <th>Value</th>
+            </tr>
+            {% for name, value in stat_rows %}
+            <tr>
+                <td>{{ name }}</td>
+                {% autoescape off %}
+                <td>{{ value }}</td>
+                {% endautoescape %}
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+{% endblock %}
