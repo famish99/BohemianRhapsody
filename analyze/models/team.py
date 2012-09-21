@@ -78,8 +78,8 @@ class Roster(models.Model):
     """
     Player membership model
     """
-    team = models.ForeignKey(Team)
-    player = models.ForeignKey(Player)
+    team = models.ForeignKey(Team, related_name='roster')
+    player = models.ForeignKey(Player, related_name='roster')
     week = models.SmallIntegerField()
     position = models.CharField(max_length=4)
 

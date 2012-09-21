@@ -70,6 +70,18 @@ class Player(models.Model):
         position_type = self._raw_info.get('position_type', 'X')
         return position_type in eligible_positions
 
+    def get_weekly_points(self, week, **kwargs):
+        """
+        Return the points for the week, allows for stat existence checks
+
+        @param week: Week number for stat to return
+        @return: Points for the week, 0 if stat doesn't exist yet
+        """
+        stat = self.stats.filter(week_num=week)
+        if not stat:
+            return 0.0
+        return stat[0].total_points()
+
     def get_points(self, **kwargs):
         """
         Return a list of the points scored

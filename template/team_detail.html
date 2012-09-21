@@ -18,7 +18,7 @@
                 {% autoescape off %}
                 {% for item in stat %}
                 {% if item.week %}<td><strong>{{ item.week }}</strong></td>{% endif %}
-                {% if item.name %}<td><small>{{ item.name }}</small></td>{% endif %}
+                {% if item.player %}<td><small><a href='/{{ league_key }}/player/{{ item.player.id }}'>{{ item.player.first_name }}</br>{{ item.player.last_name }}</a></small></td>{% endif %}
                 {% if item.points %}<td>{{ item.points }}</td>{% endif %}
                 {% endfor %}
                 {% endautoescape %}

@@ -3,7 +3,7 @@ View Module
 """
 from analyze.models.stats import STATS, PlayerStats
 from analyze.models.player import Player
-from analyze.models.league import League, YEAR_KEYS
+from analyze.models.league import League, NFLMatchup, YEAR_KEYS
 from analyze.models.team import Team
 from utils.mathutils import MathUtils
 from django.views.generic import DetailView
@@ -24,6 +24,7 @@ def template_factory(base_class, name):
             #('home', {'name': 'Home', 'ref': '/', 'active': False}),
             ('teams', {'name': 'Fantasy Teams', 'ref': 'teams/', 'active': False}),
             ('players', {'name': 'NFL Players', 'ref': 'players/', 'active': False}),
+            ('nflteams', {'name': 'NFL Teams', 'ref': 'nflteams/', 'active': False}),
             ])
 
         year_keys = YEAR_KEYS
@@ -59,6 +60,9 @@ PListView = template_factory(ListView, 'players')
 PDetailView = template_factory(DetailView, 'players')
 TListView = template_factory(ListView, 'teams')
 TDetailView = template_factory(DetailView, 'teams')
+NListView = template_factory(ListView, 'nflteams')
+NDetailView = template_factory(DetailView, 'nflteams')
+
 
 class HomeView(HTemplateView):
     """
@@ -86,6 +90,38 @@ class LeagueList(HListView):
         context = super(LeagueList, self).get_context_data(**kwargs)
         context['nav_list'] = None
         return context
+
+
+class NFLTeamList(NListView):
+    """
+    List teams in the league
+    """
+    template_name = 'nflteam_list.html'
+    page_title = 'NFL Matchups'
+
+    def get_queryset(self, **kwargs):
+        league_key = self.kwargs.get('league_key')
+        year = self.__class__.year_keys.get(league_key.split('.l.', 1)[0])
+        week = self.request.GET.get('week', League.objects.get(league_key=league_key).current_week)
+        queryset = NFLMatchup.objects.filter(year=year)
+        queryset = queryset.filter(week=week)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(NFLTeamList, self).get_context_data(**kwargs)
+        league = League.objects.get(league_key=self.kwargs.get('league_key'))
+        context['league'] = league
+        context['weeks'] = range(league.start_week, league.end_week + 1)
+        return context
+
+
+class NFLTeamDetail(NDetailView):
+    """
+    View class for individual team detail
+    """
+    template_name = 'team_detail.html'
+    page_title = 'Team Detail'
+    model = Team
 
 
 class TeamList(TListView):
@@ -145,7 +181,7 @@ class TeamDetail(TDetailView):
     def get_context_data(self, **kwargs):
         context = super(TeamDetail, self).get_context_data(**kwargs)
         team = context['object']
-        weeks = range(1, League.objects.get(league_key=self.kwargs.get('league_key')).end_week + 1)
+        weeks = range(1, League.objects.get(league_key=self.kwargs.get('league_key')).current_week + 1)
         context['stat_headers'] = ['Week #'] + self.__class__.position_list
         context['stat_list'] = []
         for week in weeks:
@@ -154,8 +190,9 @@ class TeamDetail(TDetailView):
                     for position in self.__class__.unique_list
                     for player in team.players.filter(Q(roster__position=position), Q(roster__week=week))
                     ]
-            stat_week = [ {'week': week} ] + [ {'name': '%s %s' % (player.first_name, player.last_name), } for player in player_list ]
-            lower_stat = [ {'points': "0"} ] + [ {'points': '%s' % str(player.stats.get(week_num=week).total_points()), } for player in player_list]
+            stat_week = [ {'week': week} ] + [ {'player': player} for player in player_list ]
+            points = MathUtils.sum([ roster.player.get_weekly_points(week) for roster in team.roster.filter(week=week).exclude(position='BN')])
+            lower_stat = [ {'points': 'Total: %.2f' % points} ] + [ {'points': '%.2f' % player.get_weekly_points(week)} for player in player_list ]
             context['stat_list'].append(stat_week)
             context['stat_list'].append(lower_stat)
 
@@ -264,7 +301,7 @@ class PlayerList(PListView):
 
     def get_queryset(self):
         year_key = self.get_year_key()
-        queryset = Player.objects.filter(player_key__contains=year_key)
+        queryset = Player.objects.filter(player_key__contains='%s.p.' % year_key)
         queryset = queryset.filter(season_points__gt=0)
         position = self.request.GET.get('position', 'all')
         name = self.request.GET.get('name')
@@ -297,6 +334,12 @@ class PlayerList(PListView):
         page_vars = {}
         positions = copy.deepcopy(self.__class__.positions)
         sort_methods = copy.deepcopy(self.__class__.sort_methods)
+        min_std = self.request.GET.get('min_std')
+        if min_std:
+            page_vars['min_std'] = min_std
+        min_mean = self.request.GET.get('min_mean')
+        if min_mean:
+            page_vars['min_mean'] = min_mean
         sort = self.request.GET.get('sort')
         if sort:
             page_vars['sort'] = sort

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="span12">
+<div class="span10 offset1">
     <h2>NFL Players List</h2>
     <div class="form-horizontal">
         <legend>Filter Controls</legend>
@@ -71,14 +71,14 @@
         </tr>
     {% for item in object_list %}
     <tr>
-        <td><a href='/{{ league_key }}/player/{{ item.id }}'>{{ item.first_name }} {{ item.last_name }}</a></td>
-        <td>{{ item.team_name }}</td>
-        <td>{{ item.position }}</td>
-        <td>{{ item.season_points }}</td>
-        <td>{{ item.mean_points }} &plusmn;{{ item.std_dev_points }}</td>
-        <td>{{ item.median_points }}</td>
-        <td>{{ item.games_played }}</td>
-        <td>{{ item.risk_factor }}%</td>
+        <td width="20%"><a href='/{{ league_key }}/player/{{ item.id }}'>{{ item.first_name }} {{ item.last_name }}</a></td>
+        <td width="17%">{{ item.team_name }}</td>
+        <td width="5%">{{ item.position }}</td>
+        <td width="5%">{{ item.season_points }}</td>
+        <td width="9%">{{ item.mean_points }} &plusmn;{{ item.std_dev_points }}</td>
+        <td width="5%">{{ item.median_points }}</td>
+        <td width="5%">{{ item.games_played }}</td>
+        <td width="5%">{{ item.risk_factor }}%</td>
     </tr>
     {% endfor %}
     </table>

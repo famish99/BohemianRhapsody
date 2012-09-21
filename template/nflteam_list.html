@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="span8 offset2">
+    <h2>{{ league.year }} NFL Schedule</h2>
+    <ul class="nav nav-tabs">
+        {% for week in weeks %}
+        <li><a href='/{{ league.league_key }}/nflteams/?week={{ week }}'>{{ week }}</a></li>
+        {% endfor %}
+    </ul>
+    <table class="table table-condensed">
+        <tr>
+            <th colspan=2>Away</th>
+            <th colspan=2 style="text-align: right;">Home</th>
+        </tr>
+    {% for item in object_list %}
+    <tr>
+        <td width="45%"><a href="#">{{ item.away_team }}</a></td>
+        <td width="5%" style="text-align: left;">{{ item.away_score }}</td>
+        <td width="5%" style="text-align: right;">{{ item.home_score }}</td>
+        <td width="45%" style="text-align: right;"><a href="#">{{ item.home_team }}</a></td>
+    </tr>
+    {% endfor %}
+    </table>
+</div>
+{% endblock %}

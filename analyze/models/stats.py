@@ -72,6 +72,7 @@ class PlayerStats(models.Model):
     player = models.ForeignKey(Player, related_name='stats')
     week_num = models.SmallIntegerField()
     stat_data = PickledObjectField()
+    default_round = 2
 
     def __init__(self, *args, **kwargs):
         super(PlayerStats, self).__init__(*args, **kwargs)
@@ -93,16 +94,15 @@ class PlayerStats(models.Model):
             key = item.get('stat_id')
             value = int(item.get('value'))
             self.stat_data[key] = value
-        print self.stat_data
 
     def total_points(self, **kwargs):
         """
         Return the total points for the player for the week
         """
-        points = 0
+        points = 0.0
         for key, value in self.stat_data.items():
             points = points + STATS[key][1](value)
-        return points
+        return round(points, self.__class__.default_round)
 
     class Meta:
         """ Metadata class for PlayerStats """

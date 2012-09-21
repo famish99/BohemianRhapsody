@@ -14,6 +14,8 @@ urlpatterns = patterns('',
     url(r'^(?P<league_key>[\w.]+)/player/(?P<pk>\d+)/$', analyze.views.PlayerDetail.as_view()),
     url(r'^(?P<league_key>[\w.]+)/teams/$', analyze.views.TeamList.as_view()),
     url(r'^(?P<league_key>[\w.]+)/team/(?P<pk>\d+)/$', analyze.views.TeamDetail.as_view()),
+    url(r'^(?P<league_key>[\w.]+)/nflteams/$', analyze.views.NFLTeamList.as_view()),
+    url(r'^(?P<league_key>[\w.]+)/nflteam/(?P<pk>\d+)/$', analyze.views.NFLTeamDetail.as_view()),
     # url(r'^fantasy/', include('fantasy.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:
