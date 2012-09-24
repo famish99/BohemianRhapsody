@@ -263,12 +263,6 @@ class PlayerList(PListView):
     template_name = 'list.html'
     page_title = 'Players Home'
 
-    script_list = [
-            '/static/jquery.js',
-            '/static/common.js',
-            '/static/player_list.js',
-            ]
-
     positions = SortedDict([
         ('all', {'label': 'All', 'selected': False}),
         ('QB' , {'label': 'QB' , 'selected': False}),
