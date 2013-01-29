@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# $ pull_stats LEAGUE WEEK YEAR
+./cli_analyze.py --loadleague -l $1 -S 3
+./cli_analyze.py --loadroster -l $1 -w $2 -S 3
+./cli_analyze.py --loadnfl $3 -w $2
+./cli_analyze.py --loadstats -S 3 -l $1 -w $2
